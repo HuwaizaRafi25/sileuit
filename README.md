@@ -21,6 +21,11 @@ Pest + Pint · GitHub Actions · Docker (layanan dev saja)
 - Mailpit: http://localhost:8025
 - Health: http://localhost:8000/healthz
 
+## Akun dev (seed Fase 1)
+- Staf: {kode}@sileuit.id / Sileuit#2026 — kode: pemilik-1, adm-1, pengadaan-1, keu-1, pg-g1, pg-g2, kg-g1, kg-g2, ksr-c1, ksr-c2, kur-1
+- Petani: +628111111001 (P-001) / +628111111002 (P-002), PIN 123456 → /login/petani
+- Mitra B2B: retail-contoh-satu@mitra.sileuit.id / Sileuit#2026
+
 ## Struktur
 `app/Modules/*` = domain (F.3) · `app/Infrastructure/*` = lintas domain
 `docs/DEVIATION-LOG.md` = penyimpangan dari dokumen + patch kalimat

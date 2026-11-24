@@ -94,3 +94,49 @@ Di Laravel ini diatur lewat SESSION_LIFETIME=30.
 Kunci unik per transaksi (UUID). Permintaan dengan kunci sama hanya diproses
 sekali — klik ganda, retry jaringan, atau webhook ulang tidak menghasilkan
 pembayaran/penerimaan dobel (BR-07, IR-02).
+
+## Fase 1 — Akses, Master, dan Harga
+
+**1. Apa itu RBAC dan Location Scoping?**
+RBAC = hak akses berdasarkan peran (10 peran kami). Location scoping = lapisan kedua:
+pengguna cakupan (G) hanya melihat baris berlokasi tugasnya, dipaksa di server lewat
+global Eloquent scope + middleware, bukan sekadar menyembunyikan tombol (H.1).
+
+**2. Apa itu IDOR dan bagaimana kami mencegahnya?**
+Insecure Direct Object Reference: mengganti ID di URL/API untuk membaca data orang lain.
+Dicegah tiga lapis: policy peran, filter lokasi di query, filter data sendiri (partner_id).
+Percobaan gagal dijawab 403 dan otomatis tercatat di audit_logs (TC-08/25/26).
+
+**3. Kenapa audit log append-only sampai level database?**
+Karena kalau hanya kode aplikasi yang melarang, admin database tetap bisa menghapus jejak.
+Kami pasang trigger MySQL BEFORE UPDATE/DELETE yang menolak (SIGNAL), sesuai IR-07/H.5.
+
+**4. Kenapa nomor HP dienkripsi tapi ada kolom hp_hash?**
+AES-256 (H.4) menghasilkan ciphertext berbeda tiap enkripsi, sehingga tidak bisa di-UNIQUE
+atau dicari. hp_hash = SHA-256 deterministik untuk constraint unik & pencarian login,
+tanpa membocorkan nomor asli saat dump DB bocor.
+
+**5. Bagaimana IR-06 (periode harga tak tumpang tindih) di MySQL?**
+PostgreSQL punya exclusion constraint; MySQL tidak. Kami tegakkan di hook saving model
+dalam transaksi: tolak bila ada item grade sama dengan rentang tanggal beririsan (DEV-001).
+
+**6. Apa itu PriceResolver dan kenapa harga tidak boleh diketik manual?**
+Service yang mengambil harga dari daftar bertanggal yang sudah disetujui Pemilik dan
+berlaku pada tanggal timbang (BR-01). Tidak ada → exception → konfirmasi diblokir (TC-05).
+Ini menutup risiko petugas menaikkan harga ilegal (H.2).
+
+**7. Kenapa rate limiter 5 percobaan / 15 menit?**
+Mitigasi brute force (H.2, OWASP ASVS L1). Kunci per IP, decay 15 menit, pesan sesuai
+SCR-01. Diselaraskan ke 15 menit (DEV-005).
+
+**8. Apa itu Gate/Policy di Laravel?**
+Gate = definisi kemampuan terpusat (mis. approve-price hanya PEMILIK); Policy = otorisasi
+per model. Filament resource memakai canAccess() sehingga 403 terjadi di server, bukan UI.
+
+**9. Kenapa seeder data sintetis, bukan data asli?**
+Brief mewajibkan data uji sintetis (BT-06). Baseline DS-LOK/USR/TANI/HARGA/MITRA dari
+Bagian I dibuat persis agar angka test case cocok dengan tampilan.
+
+**10. Apa itu modal CRUD (simple resource) di Filament?**
+Master data dikelola lewat tabel + formulir modal tanpa halaman terpisah — lebih cepat
+dibangun dan cukup untuk data induk; transaksi kompleks (penerimaan) memakai wizard Livewire.

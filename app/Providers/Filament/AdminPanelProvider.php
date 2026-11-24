@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('SiLeuit.id')
+            ->colors(['primary' => Color::hex('#2F5A27')])
+            ->font('Inter')
             ->colors([
                 'primary' => Color::Amber,
             ])

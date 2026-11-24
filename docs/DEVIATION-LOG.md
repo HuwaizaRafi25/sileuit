@@ -16,6 +16,9 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-008 | 24 Nov 2026 | FR-18 (offline PWA) dibangun di Fase 6; FR-12 cukup webhook HMAC + simulator, tanpa akun gateway asli | FR-18 inti nilai jual (TC-14); Q-06/K.1: katalog B2C = Rilis 1.1 | K.1 | ACC |
 | DEV-009 | 24 Nov 2026 | UI Stitch tim: adopsi palet/tipografi/layout; TOLAK landing publik, katalog, lacak-lot publik, self-register, link OTP, sensor silo | Katalog = Rilis 1.1 (Q-06); akun dibuat Admin (FR-01); IoT & giling di luar MVP | — (keputusan desain, selaras dokumen) | ACC |
 | DEV-010 | 24 Nov 2026 | Pin versi: Laravel 13.x + Filament ^4.9 + Livewire 3 + PHP 8.6 lokal (min 8.3), CI PHP 8.5 | Filament v4 mendukung Laravel 13 sejak 4.9.0; TIDAK ada deviasi dari R-03 | — (konfirmasi) | ACC |
+| DEV-011 | 25 Nov 2026 | Pest 5 + PHPUnit 13 (bukan v4) | Kompatibilitas PHP 8.6; dokumen hanya mewajibkan "PHPUnit/Pest" | — (catatan versi) | ACC |
+| DEV-012 | 25 Nov 2026 | MinIO dev diganti SeaweedFS (S3-compatible), endpoint/bucket tetap | Image MinIO tidak lagi tersedia gratis; hanya dev lokal, produksi tetap S3/B2 | F.5 dev | ACC |
+| DEV-013 | 25 Nov 2026 | Kolom hp/no_rekening terenkripsi + kolom hp_hash SHA-256 untuk uniqueness & lookup | Enkripsi AES (H.4) membuat UNIQUE pada ciphertext tidak mungkin; hash deterministik menjaga IR-02 | E.4.2 (mekanisme) | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 

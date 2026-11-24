@@ -1,10 +1,15 @@
 <?php
 
 use App\Infrastructure\Http\Controllers\HealthController;
+use App\Infrastructure\Middleware\EnsureLocationScope;
+use App\Infrastructure\Services\AuditLogger;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,14 +18,26 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // /healthz tanpa middleware sesi (J.4.1) — untuk uptime monitor.
             Route::get('/healthz', HealthController::class);
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Alias middleware kustom (location.scope, security.headers, dll.)
-        // didaftarkan pada Fase 1.
+        $middleware->alias([
+            'location.scope' => EnsureLocationScope::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // BR-12 / TC-08 / TC-26: setiap penolakan otorisasi tercatat di audit.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            $ditolak = $e instanceof AuthorizationException
+                || ($e instanceof HttpException && $e->getStatusCode() === 403);
+            if ($ditolak) {
+                AuditLogger::log('AKSES_DITOLAK', null, null, null, [
+                    'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                ]);
+            }
+
+            return null;
+        });
     })->create();
