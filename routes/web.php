@@ -1,5 +1,8 @@
 <?php
 
+use App\Modules\AuditNotification\Livewire\AuditLogBoard;
+use App\Modules\AuditNotification\Livewire\DashboardBoard;
+use App\Modules\BillingAccountsReceivable\Livewire\InvoiceBoard;
 use App\Modules\IdentityAccess\Http\Controllers\LoginController;
 use App\Modules\InventoryLedger\Livewire\AdjustmentBoard;
 use App\Modules\InventoryLedger\Livewire\TransferBoard;
@@ -24,7 +27,7 @@ Route::post('/login/petani', [LoginController::class, 'loginPetani']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::view('/app/beranda', 'app.beranda')->name('beranda');
+    Route::get('/app/beranda', DashboardBoard::class)->name('beranda');
 
     Route::get('/app/penerimaan', function () {
         abort_unless(auth()->user()->hasRole('PETUGAS_GUDANG', 'KEPALA_GUDANG', 'KEUANGAN', 'ADMIN', 'PEMILIK', 'PENGADAAN'), 403);
@@ -70,6 +73,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/pengiriman', OrderFulfillmentBoard::class)->name('pengiriman');
     Route::get('/app/retur', ReturnBoard::class)->name('retur');
     Route::get('/app/pos', PosBoard::class)->name('pos');
+    Route::get('/app/invoice', InvoiceBoard::class)->name('invoice');
+    Route::get('/app/audit', AuditLogBoard::class)->name('audit');
 
     Route::get('/portal', function () {
         abort_unless(auth()->user()->hasRole('PETANI'), 403);

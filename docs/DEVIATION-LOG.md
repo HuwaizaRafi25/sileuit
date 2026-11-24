@@ -30,6 +30,9 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-022 | 25 Nov 2026 | DeliveryReceipt (ENT-21) digabung sebagai kolom POD pada Shipment | Relasi 1:1; satu tabel lebih sederhana tanpa kehilangan makna | E.4.10 | ACC |
 | DEV-023 | 25 Nov 2026 | payments.partner_id menjadi nullable untuk POS walk-in tanpa mitra | B2C tunai tidak punya partner; rekonsiliasi tetap via PaymentAllocation.sale_id (R-05) | E.4.12 | ACC |
 | DEV-024 | 25 Nov 2026 | Retur STOK_KEMBALI mengredit balik lot asal secara terbaik-effort (reservasi/baris pertama) | Retur multi-lot presisi penuh menyusul; MVP mencatat hasil & jumlah dengan benar | E.4.13 | ACC |
+| DEV-025 | 25 Nov 2026 | Invoice terbit otomatis dari pesanan DELIVERED menggunakan HET aktif sebagai harga per kg | BR-11 (HET) dipakai konsisten untuk harga jual eceran & B2B; bila tidak ada HET → Rp10.000 placeholder | BR-08, BR-11 | ACC |
+| DEV-026 | 25 Nov 2026 | Pembayaran > saldo ditolak mentah (A-17); tidak ada pencatatan deposit/kelebihan bayar | MVP bukan akuntansi penuh; kasir/keuangan diminta memecah pembayaran | A-17 | ACC |
+| DEV-027 | 25 Nov 2026 | Status invoice (ISSUED/PARTIAL/PAID/OVERDUE) diturunkan dari total − alokasi, bukan disimpan | IR-11: mencegah manipulasi saldo manual | IR-11 | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 

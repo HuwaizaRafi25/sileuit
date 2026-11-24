@@ -2,8 +2,10 @@
 
 namespace App\Modules\AuditNotification\Models;
 
+use App\Modules\IdentityAccess\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RuntimeException;
 
 class AuditLog extends Model
@@ -17,6 +19,11 @@ class AuditLog extends Model
     protected function casts(): array
     {
         return ['nilai_lama' => 'array', 'nilai_baru' => 'array', 'waktu' => 'datetime'];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     protected static function booted(): void

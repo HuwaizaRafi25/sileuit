@@ -238,3 +238,42 @@ kasir dengan HET aktif per komoditas; mode BLOKIR menolak, mode PERINGATAN melol
 **6. Bagaimana webhook pembayaran dibuat aman dan anti-duplikat?**
 Server menghitung ulang HMAC-SHA512 dari raw body memakai secret; signature tidak cocok → 401.
 Event diproses idempoten: event_id jadi idempotency_key unik, webhook kedua diabaikan (TC-13).
+
+## Fase 5 — Invoice, Piutang, Dashboard, Audit
+
+**1. Kapan invoice terbit?**
+Setelah pesanan DELIVERED (Q-D4). Sistem menarik baris pesanan yang sudah terpenuhi
+dan menghitung total dari HET aktif per komoditas (atau harga placeholder bila HET belum
+diatur). Invoice tidak bisa terbit dua kali untuk pesanan yang sama (TC-15).
+
+**2. Bagaimana alokasi pembayaran ke beberapa invoice?**
+BR-08: pembayaran dialokasikan ke invoice tertua lebih dulu (FIFO berdasarkan tgl_invoice).
+Keuangan boleh memilih urutan manual; bila tidak, sistem memakai urutan naik.
+TC-22 membuktikan: bayar Rp6 juta untuk dua invoice (Rp5jt & Rp8jt) melunasi INV-001 dan
+memotong Rp1 juta dari INV-002.
+
+**3. Bagaimana batas kredit ditegakkan?**
+Saat terbit invoice, sistem menjumlahkan saldo piutang mitra + total invoice baru; bila
+melebihi batas_kredit, permintaan ditolak kecuali Keuangan memilih "paksa" (TC-15). Setiap
+permintaan paksa tercatat di audit.
+
+**4. Kenapa pembayaran > saldo ditolak?**
+MVP bukan sistem akuntansi penuh (A-17/TC-21). Mencatat kelebihan bayar sebagai deposit
+akan memerlukan modul kredit/refund tersendiri; ditunda ke rilis berikutnya.
+
+**5. Bagaimana status invoice diturunkan?**
+Status = fungsi(total, dibayar, jatuh_tempo): ISSUED bila belum dibayar dan belum jatuh
+tempo; PARTIAL bila sebagian; PAID bila lunas; OVERDUE bila sudah lewat jatuh tempo.
+Tidak disimpan di kolom, jadi tidak bisa dimanipulasi (IR-11).
+
+**6. Apa isi dashboard per peran?**
+Kartu metrik yang relevan: stok on-hand, lot mendekati kedaluwarsa (80%), penerimaan
+hari ini, pesanan aktif, piutang berjalan, persetujuan menunggu. Setiap kartu adalah
+tautan ke layar detailnya. Petugas gudang melihat kartu operasional, Keuangan melihat
+piutang & aging, Pemilik melihat semuanya.
+
+**7. Bagaimana audit log ditampilkan?**
+SCR-13: tabel append-only dengan pencarian (aksi/entitas/nama pelaku) dan filter aksi.
+Hanya Pemilik/Admin yang boleh membuka; peran lain menerima 403. Semua kejadian penting
+(PENERIMAAN_KONFIRMASI, PEMBAYARAN_PETANI, PEMBAYARAN_INVOICE, AKSES_DITOLAK, dsb.)
+sudah tercatat dari Fase 1-4.
