@@ -20,5 +20,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('create-price', fn (User $u) => $u->hasRole('PENGADAAN'));
         Gate::define('manage-users', fn (User $u) => $u->hasRole('PEMILIK', 'ADMIN'));
         Gate::define('approve-contract', fn (User $u) => $u->hasRole('PEMILIK'));
+
+        Gate::define('lihat-stok', fn (User $u) => $u->hasRole('PEMILIK', 'ADMIN', 'PENGADAAN', 'KEUANGAN', 'PETUGAS_GUDANG', 'KEPALA_GUDANG', 'KASIR'));
+        Gate::define('buat-transfer', fn (User $u) => $u->hasRole('PETUGAS_GUDANG', 'KEPALA_GUDANG'));
+        Gate::define('terima-transfer', fn (User $u) => $u->hasRole('KEPALA_GUDANG'));
+        Gate::define('buat-penyesuaian', fn (User $u) => $u->hasRole('PETUGAS_GUDANG', 'KEPALA_GUDANG'));
+        Gate::define('buat-pesanan', fn (User $u) => $u->hasRole('KASIR', 'ADMIN', 'KEPALA_GUDANG'));
+        Gate::define('alokasi-pesanan', fn (User $u) => $u->hasRole('ADMIN', 'KEPALA_GUDANG'));
     }
 }

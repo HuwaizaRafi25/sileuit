@@ -175,3 +175,38 @@ berupa 403 tercatat di audit, bukan 404 senyap.
 **8. Kenapa dokumen final tidak bisa diedit?**
 BR-13: koreksi lewat dokumen pembalik, bukan menimpa bukti. Trigger receipts_lock_final menolak
 perubahan kolom isi saat status CONFIRMED/PAID/REJECTED.
+
+## Fase 3 — FEFO, Transfer, dan Penyesuaian
+
+**1. Apa itu FEFO dan bedanya dengan FIFO?**
+FIFO = First In First Out (masuk paling awal keluar dulu). FEFO = First Expired First Out
+(batas simpan paling awal keluar dulu). Untuk pangan, FEFO lebih tepat karena dua lot bisa
+punya umur simpan berbeda. Kami urutkan batas_simpan lalu tgl_terima (BR-04).
+
+**2. Apa itu stok in-transit dan kenapa transfer dua tahap?**
+Saat SHIPPED, stok keluar dari gudang asal tetapi belum masuk tujuan; jumlahnya dibaca dari
+TransferLine berstatus SHIPPED. Ini mencegah barang "hilang" di jalan: kalau tujuan menerima
+lebih sedikit, selisihnya tercatat sebagai DISCREPANCY, bukan menguap (BR-15, TC-09).
+
+**3. Apa bedanya on-hand, reserved, dan tersedia?**
+On-hand = fisik di lokasi. Reserved = sudah dipesan tapi belum keluar. Tersedia = on-hand − reserved.
+Reservasi TIDAK menulis ledger karena belum mengubah fisik; ia hanya menaikkan reserved_kg
+dengan kunci baris, sehingga dua pesanan tidak bisa memakai kilogram yang sama (IR-13).
+
+**4. Kenapa lot kedaluwarsa tidak otomatis dihapus?**
+Barangnya masih ada secara fisik dan harus tetap bisa diaudit. Statusnya jadi KEDALUWARSA,
+diblokir dari alokasi normal, dan hanya bisa dipakai dengan persetujuan Kepala Gudang yang
+tercatat di audit (BR-04, TC-27).
+
+**5. Kenapa koreksi stok lewat penyesuaian, bukan edit saldo?**
+Ledger append-only (BR-03). Mengedit saldo akan memutus jejak. Penyesuaian adalah dokumen
+beralasan + bertanda tangan yang menulis mutasi baru, sehingga saldo lama tetap bisa direkonstruksi.
+
+**6. Apa itu saldo awal cutover dan kenapa lewat dokumen resmi?**
+Saat go-live, stok fisik hasil opname dimasukkan lewat STOCK_ADJUSTMENT_INITIAL yang disetujui
+Pemilik, bukan UPDATE database. Dengan begitu kilogram pertama pun punya jejak audit (J.3.2, RK-06).
+
+**7. Bagaimana sistem mencegah transfer melebihi stok?**
+ShipTransferAction memanggil StockLedgerWriter di dalam transaksi; saldo dikunci
+SELECT ... FOR UPDATE, hasil pengurangan dihitung, dan bila negatif seluruh transaksi dibatalkan
+sehingga tidak ada mutasi yang tersimpan (TC-28).

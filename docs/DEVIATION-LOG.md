@@ -23,6 +23,10 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-015 | 25 Nov 2026 | KARANTINA: lot masuk ledger fisik tetapi nilai_bayar 0 dan tidak bisa dibayar/dialokasikan sampai dilepas | BR-06 hanya melarang stok layak jual; pelepasan karantina lewat penyesuaian (Fase 3) | BR-06 | ACC |
 | DEV-016 | 25 Nov 2026 | IR-15 memakai UNIQUE pada kolom nullable receipt_id (MySQL mengizinkan banyak NULL) | Padanan partial unique index PostgreSQL | E.5 IR-15 | ACC |
 | DEV-017 | 25 Nov 2026 | BR-13 ditegakkan trigger yang mengunci kolom isi dokumen final; transisi status tetap diizinkan | CONFIRMED→PAID adalah transisi sah, bukan koreksi isi | E.5 IR-08 | ACC |
+| DEV-018 | 25 Nov 2026 | lots.receipt_id menjadi nullable khusus lot saldo awal cutover (kode LOT-...-SAxx) | J.3.2 mewajibkan saldo awal lewat dokumen STOCK_ADJUSTMENT_INITIAL, yang tidak punya receipt | E.4.6 | ACC |
+| DEV-019 | 25 Nov 2026 | Status pesanan hasil alokasi: penuh=ALLOCATED, sebagian=PARTIAL, nol=BACKORDER | FR-09 menyebut "alokasi sebagian + sisanya BACKORDER"; dipetakan ke enum E.4.1 | E.4.1, FR-09 | ACC |
+| DEV-020 | 25 Nov 2026 | Urutan FEFO: batas_simpan ascending, lalu tgl_terima ascending | BR-04 menyebut tanggal terima; FEFO sejati mengurutkan tanggal kedaluwarsa lebih dulu (hasil identik bila umur simpan sama) | BR-04 | ACC |
+| DEV-021 | 25 Nov 2026 | Persetujuan SALDO_AWAL oleh Pemilik; PENYESUAIAN oleh Kepala Gudang lokasi terkait | J.3.2 mensyaratkan tanda tangan Kepala Gudang dan Pemilik untuk saldo awal | FR-19, J.3.2 | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 
