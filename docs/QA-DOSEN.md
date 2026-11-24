@@ -140,3 +140,38 @@ Bagian I dibuat persis agar angka test case cocok dengan tampilan.
 **10. Apa itu modal CRUD (simple resource) di Filament?**
 Master data dikelola lewat tabel + formulir modal tanpa halaman terpisah — lebih cepat
 dibangun dan cukup untuk data induk; transaksi kompleks (penerimaan) memakai wizard Livewire.
+
+## Fase 2 — Hulu, Stok, dan Pembayaran
+
+**1. Apa itu ledger append-only dan kenapa saldo tidak disimpan begitu saja?**
+Ledger = buku mutasi yang hanya bisa ditambah. Saldo (StockBalance) adalah cache turunan;
+kalau ragu, ledger yang menang dan saldo bisa dihitung ulang. Trigger MySQL menolak UPDATE/DELETE.
+
+**2. Apa itu pessimistic row locking dan kenapa dipakai di sini?**
+SELECT ... FOR UPDATE mengunci baris saldo sampai transaksi selesai. Dua kasir yang menjual
+lot terakhir bersamaan akan antre, bukan sama-sama membaca saldo lama. Ini standar perbankan (F.7).
+
+**3. Kenapa semua aksi dibungkus DB::transaction?**
+IR-09: posting stok, lot, dan pembayaran harus atomik. Kalau satu langkah gagal, semuanya batal —
+tidak ada lot tanpa ledger atau pembayaran tanpa alokasi.
+
+**4. Apa itu idempotency key dan bagaimana TC-06 lulus?**
+Kunci unik per permintaan. Kunci sama → pembayaran yang sama dikembalikan, tidak dibuat baru.
+Kunci berbeda untuk penerimaan yang sama → ditolak karena status sudah PAID dan UNIQUE receipt_id.
+
+**5. Bagaimana grade ditentukan otomatis?**
+DetermineGradeAction memilih grade dengan ambang kadar_air_max terkecil yang masih memenuhi
+(A ≤14, B ≤16, C ≤18). Di atas 18 → tidak ada grade → wajib Tolak/Karantina dengan alasan.
+
+**6. Kenapa foto tidak disimpan di database?**
+Foto dikompres ke WebP <300KB lalu diunggah ke object storage; database hanya menyimpan path.
+Akses lewat presigned URL 15 menit agar tidak bisa di-scrape publik (F.6.2).
+
+**7. Apa bedanya global scope dan policy?**
+Global scope menyaring baris yang boleh dilihat (daftar/pencarian). Policy memutuskan boleh/tidak
+sebuah aksi pada baris tertentu. Detail sengaja dibuka tanpa scope lalu di-policy agar penolakan
+berupa 403 tercatat di audit, bukan 404 senyap.
+
+**8. Kenapa dokumen final tidak bisa diedit?**
+BR-13: koreksi lewat dokumen pembalik, bukan menimpa bukti. Trigger receipts_lock_final menolak
+perubahan kolom isi saat status CONFIRMED/PAID/REJECTED.

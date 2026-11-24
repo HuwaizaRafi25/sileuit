@@ -19,6 +19,10 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-011 | 25 Nov 2026 | Pest 5 + PHPUnit 13 (bukan v4) | Kompatibilitas PHP 8.6; dokumen hanya mewajibkan "PHPUnit/Pest" | — (catatan versi) | ACC |
 | DEV-012 | 25 Nov 2026 | MinIO dev diganti SeaweedFS (S3-compatible), endpoint/bucket tetap | Image MinIO tidak lagi tersedia gratis; hanya dev lokal, produksi tetap S3/B2 | F.5 dev | ACC |
 | DEV-013 | 25 Nov 2026 | Kolom hp/no_rekening terenkripsi + kolom hp_hash SHA-256 untuk uniqueness & lookup | Enkripsi AES (H.4) membuat UNIQUE pada ciphertext tidak mungkin; hash deterministik menjaga IR-02 | E.4.2 (mekanisme) | ACC |
+| DEV-014 | 25 Nov 2026 | Lot.grade_id nullable khusus lot KARANTINA (CHECK: status KARANTINA atau grade terisi) | Mutu di bawah minimum tidak punya grade, tetapi barang fisik tetap tercatat di ledger | E.4.6 | ACC |
+| DEV-015 | 25 Nov 2026 | KARANTINA: lot masuk ledger fisik tetapi nilai_bayar 0 dan tidak bisa dibayar/dialokasikan sampai dilepas | BR-06 hanya melarang stok layak jual; pelepasan karantina lewat penyesuaian (Fase 3) | BR-06 | ACC |
+| DEV-016 | 25 Nov 2026 | IR-15 memakai UNIQUE pada kolom nullable receipt_id (MySQL mengizinkan banyak NULL) | Padanan partial unique index PostgreSQL | E.5 IR-15 | ACC |
+| DEV-017 | 25 Nov 2026 | BR-13 ditegakkan trigger yang mengunci kolom isi dokumen final; transisi status tetap diizinkan | CONFIRMED→PAID adalah transisi sah, bukan koreksi isi | E.5 IR-08 | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 

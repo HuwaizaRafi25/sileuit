@@ -10,9 +10,10 @@ trait BelongsToLocation
     {
         static::addGlobalScope('lokasi', function (Builder $q) {
             $user = auth()->user();
-            if ($user && ! $user->isGlobal()) {
-                $q->whereIn($q->getModel()->getTable().'.location_id', $user->locationScopes->pluck('id'));
+            if (! $user || $user->isGlobal() || $user->hasRole('PETANI', 'MITRA_B2B')) {
+                return;
             }
+            $q->whereIn($q->getModel()->getTable().'.location_id', $user->locationScopes->pluck('id'));
         });
     }
 }

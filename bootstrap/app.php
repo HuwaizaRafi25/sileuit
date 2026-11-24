@@ -25,9 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'location.scope' => EnsureLocationScope::class,
         ]);
+        $middleware->validateCsrfTokens(except: ['api/*']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // BR-12 / TC-08 / TC-26: setiap penolakan otorisasi tercatat di audit.
         $exceptions->render(function (Throwable $e, Request $request) {
             $ditolak = $e instanceof AuthorizationException
                 || ($e instanceof HttpException && $e->getStatusCode() === 403);
