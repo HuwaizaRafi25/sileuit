@@ -12,9 +12,9 @@ class StockLedgerWriter
 {
     /**
      * BR-03 / IR-05 / IR-09: satu-satunya jalan mengubah stok.
-     * Wajib dipanggil di dalam transaksi database. Baris saldo dikunci (SELECT ... FOR UPDATE).
+     * Wajib dipanggil dalam transaksi. $reservedDelta dipakai saat kirim (melepas reservasi).
      */
-    public function post(Lot $lot, int $locationId, string $jenis, float $qty, string $refTipe, int $refId, User $oleh): StockLedger
+    public function post(Lot $lot, int $locationId, string $jenis, float $qty, string $refTipe, int $refId, User $oleh, float $reservedDelta = 0.0): StockLedger
     {
         if (round($qty, 3) === 0.0) {
             throw ValidationException::withMessages(['qty' => 'Kuantitas mutasi tidak boleh nol (IR-04).']);
@@ -26,17 +26,21 @@ class StockLedgerWriter
         );
 
         $balance = StockBalance::where('lot_id', $lot->id)->where('location_id', $locationId)->lockForUpdate()->first();
-        $baru = round((float) $balance->on_hand_kg + $qty, 3);
+        $baruOnHand = round((float) $balance->on_hand_kg + $qty, 3);
+        $baruReserved = round((float) $balance->reserved_kg + $reservedDelta, 3);
 
-        if ($baru < 0) {
+        if ($baruOnHand < 0) {
             throw ValidationException::withMessages(['qty' => 'Stok tidak cukup. Tersedia '.number_format((float) $balance->on_hand_kg, 3, ',', '.').' kg.']);
         }
-        if ((float) $balance->reserved_kg > $baru) {
-            throw ValidationException::withMessages(['qty' => 'Stok sudah dipesan sebagian. Tersedia '.number_format($baru - (float) $balance->reserved_kg, 3, ',', '.').' kg.']);
+        if ($baruReserved < 0) {
+            throw ValidationException::withMessages(['qty' => 'Reservasi tidak valid.']);
+        }
+        if ($baruReserved > $baruOnHand) {
+            throw ValidationException::withMessages(['qty' => 'Reservasi melebihi stok on-hand.']);
         }
 
         StockBalance::where('lot_id', $lot->id)->where('location_id', $locationId)
-            ->update(['on_hand_kg' => $baru, 'updated_at' => now()]);
+            ->update(['on_hand_kg' => $baruOnHand, 'reserved_kg' => $baruReserved, 'updated_at' => now()]);
 
         return StockLedger::create([
             'lot_id' => $lot->id,

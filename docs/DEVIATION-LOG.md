@@ -27,6 +27,9 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-019 | 25 Nov 2026 | Status pesanan hasil alokasi: penuh=ALLOCATED, sebagian=PARTIAL, nol=BACKORDER | FR-09 menyebut "alokasi sebagian + sisanya BACKORDER"; dipetakan ke enum E.4.1 | E.4.1, FR-09 | ACC |
 | DEV-020 | 25 Nov 2026 | Urutan FEFO: batas_simpan ascending, lalu tgl_terima ascending | BR-04 menyebut tanggal terima; FEFO sejati mengurutkan tanggal kedaluwarsa lebih dulu (hasil identik bila umur simpan sama) | BR-04 | ACC |
 | DEV-021 | 25 Nov 2026 | Persetujuan SALDO_AWAL oleh Pemilik; PENYESUAIAN oleh Kepala Gudang lokasi terkait | J.3.2 mensyaratkan tanda tangan Kepala Gudang dan Pemilik untuk saldo awal | FR-19, J.3.2 | ACC |
+| DEV-022 | 25 Nov 2026 | DeliveryReceipt (ENT-21) digabung sebagai kolom POD pada Shipment | Relasi 1:1; satu tabel lebih sederhana tanpa kehilangan makna | E.4.10 | ACC |
+| DEV-023 | 25 Nov 2026 | payments.partner_id menjadi nullable untuk POS walk-in tanpa mitra | B2C tunai tidak punya partner; rekonsiliasi tetap via PaymentAllocation.sale_id (R-05) | E.4.12 | ACC |
+| DEV-024 | 25 Nov 2026 | Retur STOK_KEMBALI mengredit balik lot asal secara terbaik-effort (reservasi/baris pertama) | Retur multi-lot presisi penuh menyusul; MVP mencatat hasil & jumlah dengan benar | E.4.13 | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 

@@ -7,6 +7,9 @@ use App\Modules\InventoryLedger\Models\Lot;
 use App\Modules\InventoryLedger\Models\StockBalance;
 use App\Modules\InventoryLedger\Models\StockLedger;
 use App\Modules\OrderFulfillment\Livewire\OrderBoard;
+use App\Modules\OrderFulfillment\Livewire\OrderFulfillmentBoard;
+use App\Modules\OrderFulfillment\Livewire\ReturnBoard;
+use App\Modules\PointOfSale\Livewire\PosBoard;
 use App\Modules\ProcurementReceiving\Livewire\ReceiptDetail;
 use App\Modules\ProcurementReceiving\Livewire\ReceiptWizard;
 use App\Modules\ProcurementReceiving\Models\Receipt;
@@ -35,8 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/stok', function () {
         abort_unless(auth()->user()->can('lihat-stok'), 403);
         $u = auth()->user();
-        $q = StockBalance::with(['lot.commodity', 'lot.grade', 'location'])
-            ->where('on_hand_kg', '>', 0);
+        $q = StockBalance::with(['lot.commodity', 'lot.grade', 'location'])->where('on_hand_kg', '>', 0);
         if (! $u->isGlobal()) {
             $q->whereIn('location_id', $u->locationScopes->pluck('id'));
         }
@@ -65,6 +67,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/transfer', TransferBoard::class)->name('transfer');
     Route::get('/app/penyesuaian', AdjustmentBoard::class)->name('penyesuaian');
     Route::get('/app/pesanan', OrderBoard::class)->name('pesanan');
+    Route::get('/app/pengiriman', OrderFulfillmentBoard::class)->name('pengiriman');
+    Route::get('/app/retur', ReturnBoard::class)->name('retur');
+    Route::get('/app/pos', PosBoard::class)->name('pos');
 
     Route::get('/portal', function () {
         abort_unless(auth()->user()->hasRole('PETANI'), 403);

@@ -210,3 +210,31 @@ Pemilik, bukan UPDATE database. Dengan begitu kilogram pertama pun punya jejak a
 ShipTransferAction memanggil StockLedgerWriter di dalam transaksi; saldo dikunci
 SELECT ... FOR UPDATE, hasil pengurangan dihitung, dan bila negatif seluruh transaksi dibatalkan
 sehingga tidak ada mutasi yang tersimpan (TC-28).
+
+## Fase 4 — Pemenuhan, Retur, POS, dan Webhook
+
+**1. Kapan stok keluar untuk pesanan?**
+Saat pengiriman DIKIRIM (pesanan SHIPPED), sesuai Q-D1/BR-15. Reservasi dilepas dan on-hand
+dikurangi dalam satu transaksi terkunci; saat DELIVERED barang tidak keluar lagi.
+
+**2. Apa itu bukti terima (POD) dan kenapa penting?**
+Proof of Delivery = bukti penerima menghitung barang (foto/tanda tangan/kode) beserta jumlah
+diterima. Selisih dengan jumlah dikirim dicatat sebagai kekurangan_kg dan membuka alur retur/kredit.
+
+**3. Kenapa retur wajib merujuk dokumen asal?**
+BR-10/IR-12: tanpa referensi, retur bisa fiktif. Sistem menolak retur tanpa ref, dan membatasi
+jumlah retur agar total tidak melebihi kuantitas terkirim dikurangi retur sebelumnya (TC-12, 23, 24).
+
+**4. Bagaimana sistem mencegah kasir menjual melebihi stok?**
+Baris saldo dikunci dengan SELECT ... FOR UPDATE, lalu CHECK on_hand >= 0 di database. Jika jumlah
+melebihi tersedia, transaksi dibatalkan utuh (BR-09, TC-07). Dua kasir menjual lot terakhir bersamaan:
+yang mengunci lebih dulu berhasil, yang kedua menunggu lalu melihat stok sudah 0 → ditolak (TC-20).
+
+**5. Apa itu HET dan bagaimana ditegakkan?**
+Harga Eceran Tertinggi = batas harga jual beras ke konsumen (regulasi). Sistem membandingkan harga
+kasir dengan HET aktif per komoditas; mode BLOKIR menolak, mode PERINGATAN meloloskan dengan tanda
+(BR-11, TC-16, RK-07).
+
+**6. Bagaimana webhook pembayaran dibuat aman dan anti-duplikat?**
+Server menghitung ulang HMAC-SHA512 dari raw body memakai secret; signature tidak cocok → 401.
+Event diproses idempoten: event_id jadi idempotency_key unik, webhook kedua diabaikan (TC-13).
