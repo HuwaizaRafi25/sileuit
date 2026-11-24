@@ -1,0 +1,44 @@
+@import url('https://fonts.bunny.net/css?family=fraunces:400,500,600,700|inter:400,500,600,700&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* Design token SiLeuit.id — diadopsi dari palet Stitch tim (lihat DEVIATION-LOG DEV-009).
+   Mengubah palet = cukup edit blok ini. */
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+    --font-mono: ui-monospace, 'Cascadia Code', 'Courier New', monospace;
+
+    --color-primary: #2F5A27;
+    --color-primary-dark: #24471E;
+    --color-secondary: #6B8F3A;
+    --color-accent: #F0B429;
+    --color-paper: #FFFDF8;
+    --color-cream: #FBF3D5;
+    --color-tan: #E3C48A;
+    --color-line: #CFC6A8;
+    --color-ink: #1F2A1C;
+    --color-ink-soft: #5B6655;
+    --color-card: #FFFFFF;
+
+    --color-success: #2E7D32;
+    --color-success-bg: #E6F2E3;
+    --color-warning: #8A5A00;
+    --color-warning-bg: #FFF1CC;
+    --color-danger: #B3402A;
+    --color-danger-bg: #FBE5E0;
+
+    --radius-card: 12px;
+    --radius-btn: 10px;
+}
+
+body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+}

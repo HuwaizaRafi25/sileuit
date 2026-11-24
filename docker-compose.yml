@@ -1,0 +1,81 @@
+# Layanan development SiLeuit.id. PHP & MySQL jalan native via Laragon.
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: sileuit-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: chrislusf/seaweedfs:latest
+    container_name: sileuit-minio
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - minio-data:/data
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /etc/seaweedfs
+        cat <<'EOF' > /etc/seaweedfs/s3.json
+        {
+          "identities": [
+            {
+              "name": "minioadmin",
+              "credentials": [
+                {
+                  "accessKey": "minioadmin",
+                  "secretKey": "minioadmin"
+                }
+              ],
+              "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+            }
+          ]
+        }
+        EOF
+        exec /entrypoint.sh server -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json -dir=/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9000/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio-init:
+    image: amazon/aws-cli:latest
+    container_name: sileuit-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        aws --endpoint-url=http://minio:9000 s3 mb s3://sileuit-dev || true
+        echo "Bucket sileuit-dev siap."
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: sileuit-mailpit
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  minio-data:
