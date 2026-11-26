@@ -70,6 +70,57 @@ class ReceiptWizard extends Component
         abort_unless(auth()->user()->can('create', Receipt::class), 403);
         abort_if(auth()->user()->active_location_id === null, 403, 'Akun ini belum punya lokasi tugas.');
         $this->idempotency_key = (string) Str::uuid();
+
+        $draftId = request()->integer('draft');
+        if ($draftId > 0) {
+            $draft = Receipt::withoutGlobalScopes()->where('status', 'DRAFT')->find($draftId);
+            if ($draft && auth()->user()->can('view', $draft)) {
+                $this->receipt_id = $draft->id;
+                $this->idempotency_key = $draft->idempotency_key;
+                $this->contract_id = $draft->contract_id;
+                $this->harvest_plan_id = $draft->harvest_plan_id;
+                $this->bruto = $draft->bruto_kg !== null ? (string) $draft->bruto_kg : '';
+                $this->tara = $draft->tara_kg !== null ? (string) $draft->tara_kg : '';
+                $this->selisih_alasan = (string) ($draft->selisih_alasan ?? '');
+
+                $insp = $draft->inspectionTerakhir();
+                if ($insp) {
+                    $this->kadar_air = (string) $insp->kadar_air;
+                    $this->kadar_hampa = (string) $insp->kadar_hampa;
+                    $this->butir_patah = $insp->butir_patah !== null ? (string) $insp->butir_patah : '';
+                    $this->varietas = (string) $insp->varietas;
+                    $this->keputusan = (string) $insp->keputusan;
+                    $this->alasan = (string) ($insp->alasan ?? '');
+                }
+
+                $this->step = $draft->bruto_kg !== null ? 3 : 2;
+            }
+        }
+    }
+
+    public function updatedBruto($value): void
+    {
+        $this->bruto = str_replace(',', '.', (string) $value);
+    }
+
+    public function updatedTara($value): void
+    {
+        $this->tara = str_replace(',', '.', (string) $value);
+    }
+
+    public function updatedKadarAir($value): void
+    {
+        $this->kadar_air = str_replace(',', '.', (string) $value);
+    }
+
+    public function updatedKadarHampa($value): void
+    {
+        $this->kadar_hampa = str_replace(',', '.', (string) $value);
+    }
+
+    public function updatedButirPatah($value): void
+    {
+        $this->butir_patah = str_replace(',', '.', (string) $value);
     }
 
     public function kontrak()
@@ -145,6 +196,8 @@ class ReceiptWizard extends Component
 
     private function simpanLangkah2(): void
     {
+        $this->bruto = str_replace(',', '.', trim($this->bruto));
+        $this->tara = str_replace(',', '.', trim($this->tara));
         $this->validate(['bruto' => 'required|numeric|min:0.001', 'tara' => 'required|numeric|min:0']);
         $netto = app(CalculateNetWeightAction::class)->execute((float) $this->bruto, (float) $this->tara);
         $selisih = app(CalculateNetWeightAction::class)->selisihPersen($netto, $this->rencanaKg());
@@ -166,6 +219,11 @@ class ReceiptWizard extends Component
 
     private function simpanLangkah3(): void
     {
+        $this->kadar_air = str_replace(',', '.', trim($this->kadar_air));
+        $this->kadar_hampa = str_replace(',', '.', trim($this->kadar_hampa));
+        if ($this->butir_patah !== '') {
+            $this->butir_patah = str_replace(',', '.', trim($this->butir_patah));
+        }
         $this->validate([
             'kadar_air' => 'required|numeric|min:0|max:100',
             'kadar_hampa' => 'required|numeric|min:0|max:100',
@@ -185,7 +243,7 @@ class ReceiptWizard extends Component
             $this->alasan = '';
         }
 
-        $binary = (string) Image::read($this->foto->getRealPath())->scaleDown(width: 1600)->toWebp(quality: 80);
+        $binary = (string) Image::decodeBinary($this->foto->get())->scaleDown(width: 1600)->encodeUsingMediaType('image/webp', quality: 80);
         $path = 'inspections/'.$r->no_dok.'_'.now()->timestamp.'.webp';
         Storage::disk('s3')->put($path, $binary);
 
@@ -250,17 +308,56 @@ class ReceiptWizard extends Component
     {
         $lok = auth()->user()->activeLocation;
         $tgl = now()->format('ymd');
+        $prefix = sprintf('GRN-%s-%s-', $lok->kode, $tgl);
         $urut = Receipt::withoutGlobalScopes()->where('location_id', $lok->id)->whereDate('created_at', today())->count() + 1;
 
-        return sprintf('GRN-%s-%s-%03d', $lok->kode, $tgl, $urut);
+        while (Receipt::withoutGlobalScopes()->where('no_dok', sprintf('%s%03d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
+
+        return sprintf('%s%03d', $prefix, $urut);
     }
 
     public function render()
     {
+        $kontrakList = $this->kontrak()->load('partner');
+        $plansByContract = HarvestPlan::whereIn('contract_id', $kontrakList->pluck('id'))
+            ->where('status', 'RENCANA')
+            ->orderBy('tgl_perkiraan')
+            ->get()
+            ->groupBy('contract_id');
+
+        $gabahCommodity = Commodity::where('nama', 'GABAH')->first();
+        $gabahGrades = $gabahCommodity
+            ? Grade::where('commodity_id', $gabahCommodity->id)->get()->map(fn (Grade $g): array => [
+                'id' => $g->id,
+                'kode' => $g->kode,
+                'kadar_air_max' => (float) ($g->ambang_mutu['kadar_air_max'] ?? 999),
+            ])->values()->all()
+            : [];
+
+        $offlineMaster = [
+            'location_id' => auth()->user()->active_location_id,
+            'location_nama' => auth()->user()->activeLocation?->nama ?? '',
+            'grades' => $gabahGrades,
+            'contracts' => $kontrakList->map(function (Contract $k) use ($plansByContract): array {
+                return [
+                    'id' => $k->id,
+                    'label' => "{$k->partner->nama} · {$k->musim}",
+                    'plans' => ($plansByContract->get($k->id) ?? collect())->map(fn (HarvestPlan $p): array => [
+                        'id' => $p->id,
+                        'tgl_label' => $p->tgl_perkiraan->format('d M Y'),
+                        'kg_perkiraan' => (float) $p->kg_perkiraan,
+                    ])->values()->all(),
+                ];
+            })->values()->all(),
+        ];
+
         return view('livewire.receipt-wizard', [
-            'kontrak' => $this->kontrak(),
+            'kontrak' => $kontrakList,
             'rencanaList' => $this->rencana(),
             'grade' => $this->grade_id ? Grade::find($this->grade_id) : null,
+            'offlineMaster' => $offlineMaster,
         ]);
     }
 }

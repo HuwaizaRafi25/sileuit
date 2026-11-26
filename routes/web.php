@@ -1,5 +1,8 @@
 <?php
 
+use App\Infrastructure\Http\Controllers\ExportController;
+use App\Infrastructure\Http\Controllers\SearchController;
+use App\Modules\AuditNotification\Http\Controllers\NotificationController;
 use App\Modules\AuditNotification\Livewire\AuditLogBoard;
 use App\Modules\AuditNotification\Livewire\DashboardBoard;
 use App\Modules\BillingAccountsReceivable\Livewire\InvoiceBoard;
@@ -18,10 +21,12 @@ use App\Modules\ProcurementReceiving\Livewire\ReceiptWizard;
 use App\Modules\ProcurementReceiving\Models\Receipt;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+Route::view('/', 'landing')->name('home');
+Route::redirect('/admin/login', '/login');
 
 Route::get('/login', [LoginController::class, 'showStaff'])->name('login');
 Route::post('/login', [LoginController::class, 'loginStaff']);
+Route::post('/login/demo/{role}', [LoginController::class, 'loginDemo'])->name('login.demo');
 Route::get('/login/petani', [LoginController::class, 'showPetani']);
 Route::post('/login/petani', [LoginController::class, 'loginPetani']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -32,7 +37,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/penerimaan', function () {
         abort_unless(auth()->user()->hasRole('PETUGAS_GUDANG', 'KEPALA_GUDANG', 'KEUANGAN', 'ADMIN', 'PEMILIK', 'PENGADAAN'), 403);
 
-        return view('app.penerimaan', ['daftar' => Receipt::with(['contract.partner', 'location'])->latest('id')->paginate(15)]);
+        $q = Receipt::with(['contract.partner', 'location', 'inspections.grade'])->latest('id');
+        $search = request('q');
+        $status = request('status');
+        if ($search) {
+            $q->where(function ($sub) use ($search) {
+                $sub->where('no_dok', 'like', "%{$search}%")
+                    ->orWhereHas('contract.partner', fn ($p) => $p->where('nama', 'like', "%{$search}%"));
+            });
+        }
+        if ($status) {
+            $q->where('status', $status);
+        }
+
+        return view('app.penerimaan', [
+            'daftar' => $q->paginate(15)->withQueryString(),
+            'search' => $search,
+            'statusFilter' => $status,
+        ]);
     })->name('penerimaan');
 
     Route::get('/app/terima', ReceiptWizard::class)->name('terima');
@@ -45,8 +67,18 @@ Route::middleware('auth')->group(function () {
         if (! $u->isGlobal()) {
             $q->whereIn('location_id', $u->locationScopes->pluck('id'));
         }
+        $search = request('q');
+        if ($search) {
+            $q->where(function ($sub) use ($search) {
+                $sub->whereHas('lot', fn ($l) => $l->where('kode_lot', 'like', "%{$search}%"))
+                    ->orWhereHas('lot.commodity', fn ($c) => $c->where('nama', 'like', "%{$search}%"));
+            });
+        }
 
-        return view('app.stok', ['saldo' => $q->get()]);
+        return view('app.stok', [
+            'saldo' => $q->get(),
+            'search' => $search,
+        ]);
     })->name('stok');
 
     Route::get('/app/stok/{lotId}', function (int $lotId) {
@@ -75,6 +107,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/pos', PosBoard::class)->name('pos');
     Route::get('/app/invoice', InvoiceBoard::class)->name('invoice');
     Route::get('/app/audit', AuditLogBoard::class)->name('audit');
+    Route::get('/app/notifikasi', [NotificationController::class, 'index'])->name('notifikasi');
+    Route::post('/app/notifikasi/baca-semua', [NotificationController::class, 'markAllRead']);
+    Route::get('/app/cari', [SearchController::class, 'index'])->name('cari');
+
+    Route::get('/app/cetak/slip/{paymentId}', [ExportController::class, 'slip'])->name('cetak.slip');
+    Route::get('/app/cetak/surat-jalan/{shipmentId}', [ExportController::class, 'suratJalan'])->name('cetak.suratjalan');
+    Route::get('/app/cetak/invoice/{invoiceId}', [ExportController::class, 'invoice'])->name('cetak.invoice');
 
     Route::get('/portal', function () {
         abort_unless(auth()->user()->hasRole('PETANI'), 403);
@@ -83,4 +122,6 @@ Route::middleware('auth')->group(function () {
 
         return view('portal.index', ['terakhir' => $terakhir, 'insp' => $terakhir?->inspectionTerakhir(), 'riwayat' => $riwayat]);
     })->name('portal');
+
+    Route::get('/portal/penerimaan/{receiptId}', ReceiptDetail::class)->name('portal.penerimaan.detail');
 });

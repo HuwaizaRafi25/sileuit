@@ -14,9 +14,9 @@ class ReceiveTransferAction
     public function __construct(private StockLedgerWriter $ledger) {}
 
     /** @param array<int, float> $terimaPerLine keyed by transfer_line id */
-    public function execute(StockTransfer $transfer, User $oleh, array $terimaPerLine): StockTransfer
+    public function execute(StockTransfer $transfer, User $oleh, array $terimaPerLine, ?string $catatan = null): StockTransfer
     {
-        return DB::transaction(function () use ($transfer, $oleh, $terimaPerLine) {
+        return DB::transaction(function () use ($transfer, $oleh, $terimaPerLine, $catatan) {
             $t = StockTransfer::withoutGlobalScopes()->whereKey($transfer->id)->lockForUpdate()->firstOrFail();
 
             if ($t->status !== 'SHIPPED') {
@@ -49,6 +49,7 @@ class ReceiveTransferAction
                 'status' => $adaSelisih ? 'DISCREPANCY' : 'RECEIVED',
                 'diterima_oleh' => $oleh->id,
                 'waktu_terima' => now(),
+                'catatan' => filled($catatan) ? trim($catatan) : $t->catatan,
             ]);
 
             AuditLogger::log('TRANSFER_DITERIMA', 'stock_transfers', $t->id, ['status' => 'SHIPPED'],

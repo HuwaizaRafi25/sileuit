@@ -31,11 +31,38 @@ class User extends Authenticatable implements FilamentUser
 
     protected static function booted(): void
     {
-        static::saving(function (self $user) {
-            if ($user->isDirty('hp') && $user->hp) {
-                $user->hp_hash = hash('sha256', $user->hp);
+        static::saving(function (self $user): void {
+            if ($user->isDirty('hp')) {
+                if (filled($user->hp)) {
+                    $normalized = self::normalizeHp($user->hp);
+                    $user->hp = $normalized;
+                    $user->hp_hash = $normalized ? hash('sha256', $normalized) : null;
+                } else {
+                    $user->hp = null;
+                    $user->hp_hash = null;
+                }
             }
         });
+    }
+
+    public static function normalizeHp(?string $hp): ?string
+    {
+        if (! filled($hp)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D/', '', $hp) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits = '62'.substr($digits, 1);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '62'.$digits;
+        }
+
+        return '+'.$digits;
     }
 
     public function roles(): BelongsToMany

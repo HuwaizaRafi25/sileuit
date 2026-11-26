@@ -13,9 +13,9 @@ use Illuminate\Validation\ValidationException;
 class PayFarmerAction
 {
     /** BR-07 / IR-02 / IR-15: satu penerimaan dibayar sekali, idempoten terhadap kunci yang sama. */
-    public function execute(Receipt $receipt, User $oleh, string $metode, string $referensi, string $idempotencyKey): Payment
+    public function execute(Receipt $receipt, User $oleh, string $metode, string $referensi, string $idempotencyKey, ?int $buktiAttachmentId = null): Payment
     {
-        return DB::transaction(function () use ($receipt, $oleh, $metode, $referensi, $idempotencyKey) {
+        return DB::transaction(function () use ($receipt, $oleh, $metode, $referensi, $idempotencyKey, $buktiAttachmentId) {
             $sudah = Payment::where('idempotency_key', $idempotencyKey)->first();
             if ($sudah) {
                 return $sudah;
@@ -36,12 +36,18 @@ class PayFarmerAction
                 throw ValidationException::withMessages(['referensi' => 'Transfer wajib bukti transfer; tunai wajib nomor tanda terima (BR-07).']);
             }
 
+            $refTrim = trim($referensi);
+            if (Payment::where('arah', 'KELUAR')->where('metode', $metode)->where('referensi', $refTrim)->exists()) {
+                throw ValidationException::withMessages(['referensi' => "Nomor bukti/referensi '{$refTrim}' sudah pernah digunakan untuk pembayaran lain."]);
+            }
+
             $payment = Payment::create([
                 'arah' => 'KELUAR',
                 'partner_id' => $r->contract->partner_id,
                 'metode' => $metode,
                 'jumlah' => (int) $r->nilai_bayar,
-                'referensi' => $referensi,
+                'referensi' => $refTrim,
+                'bukti_attachment_id' => $buktiAttachmentId,
                 'idempotency_key' => $idempotencyKey,
                 'dicatat_oleh' => $oleh->id,
             ]);

@@ -30,11 +30,23 @@ class AdjustmentBoard extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->can('buat-penyesuaian'), 403);
+        abort_unless(auth()->user()->can('lihat-penyesuaian'), 403);
+    }
+
+    public function updatedTipe(): void
+    {
+        $this->reset(['lot_id', 'commodity_id', 'grade_id', 'qty']);
+    }
+
+    public function updatedCommodityId(): void
+    {
+        $this->grade_id = null;
     }
 
     public function buat(): void
     {
+        abort_unless(auth()->user()->can('buat-penyesuaian'), 403);
+        $this->qty = str_replace(',', '.', trim($this->qty));
         $this->validate([
             'tipe' => 'required|in:PENYESUAIAN,SALDO_AWAL',
             'qty' => 'required|numeric|not_in:0',
@@ -45,6 +57,17 @@ class AdjustmentBoard extends Component
             $this->addError('lot_id', 'Pilih lot yang disesuaikan.');
 
             return;
+        }
+        if ($this->tipe === 'PENYESUAIAN' && (float) $this->qty < 0) {
+            $balance = StockBalance::where('lot_id', $this->lot_id)
+                ->where('location_id', auth()->user()->active_location_id)
+                ->first();
+            $tersedia = $balance ? $balance->tersediaKg() : 0.0;
+            if (abs((float) $this->qty) > $tersedia) {
+                $this->addError('qty', 'Pengurangan melebihi saldo tersedia lot ('.number_format($tersedia, 1, ',', '.').' kg).');
+
+                return;
+            }
         }
         if ($this->tipe === 'SALDO_AWAL' && (! $this->commodity_id || ! $this->grade_id)) {
             $this->addError('commodity_id', 'Saldo awal butuh komoditas dan grade.');
@@ -57,8 +80,14 @@ class AdjustmentBoard extends Component
             return;
         }
 
+        $prefix = sprintf('ADJ-%s-%s-', auth()->user()->activeLocation->kode, now()->format('ymd'));
+        $urut = StockAdjustment::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+        while (StockAdjustment::withoutGlobalScopes()->where('no_dok', sprintf('%s%03d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
+
         StockAdjustment::withoutGlobalScopes()->create([
-            'no_dok' => sprintf('ADJ-%s-%s-%03d', auth()->user()->activeLocation->kode, now()->format('ymd'), StockAdjustment::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1),
+            'no_dok' => sprintf('%s%03d', $prefix, $urut),
             'tipe' => $this->tipe,
             'location_id' => auth()->user()->active_location_id,
             'lot_id' => $this->tipe === 'PENYESUAIAN' ? $this->lot_id : null,

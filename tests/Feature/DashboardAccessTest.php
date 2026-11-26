@@ -6,10 +6,10 @@ beforeEach(fn () => $this->seed());
 
 it('dashboard dapat diakses semua peran staf dan menampilkan metrik sesuai peran', function () {
     $kg = User::where('email', 'kg-g1@sileuit.id')->first();
-    $this->actingAs($kg)->get('/app/beranda')->assertOk()->assertSee('Stok on-hand');
+    $this->actingAs($kg)->get('/app/beranda')->assertOk()->assertSee('Stok On-Hand');
 
     $pg = User::where('email', 'pg-g1@sileuit.id')->first();
-    $this->actingAs($pg)->get('/app/beranda')->assertOk()->assertSee('+ Terima gabah');
+    $this->actingAs($pg)->get('/app/beranda')->assertOk()->assertSee('Terima Gabah');
 });
 
 it('audit trail hanya bisa dibuka Pemilik/Admin', function () {
@@ -17,5 +17,5 @@ it('audit trail hanya bisa dibuka Pemilik/Admin', function () {
     $this->actingAs($pg)->get('/app/audit')->assertForbidden();
 
     $pemilik = User::where('email', 'pemilik-1@sileuit.id')->first();
-    $this->actingAs($pemilik)->get('/app/audit')->assertOk()->assertSee('Audit trail');
+    $this->actingAs($pemilik)->get('/app/audit')->assertOk()->assertSee('Audit Trail');
 });

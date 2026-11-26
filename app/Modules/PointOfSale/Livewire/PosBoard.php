@@ -34,8 +34,14 @@ class PosBoard extends Component
         abort_if(auth()->user()->active_location_id === null, 403, 'Akun ini belum punya lokasi tugas.');
     }
 
+    public function updatedCommodityId(): void
+    {
+        $this->grade_id = null;
+    }
+
     public function tambah(): void
     {
+        $this->qty = str_replace(',', '.', trim($this->qty));
         $this->validate([
             'commodity_id' => 'required|exists:commodities,id',
             'grade_id' => 'required|exists:grades,id',
@@ -43,8 +49,12 @@ class PosBoard extends Component
             'harga' => 'required|integer|min:1',
         ]);
         $this->lines[] = [
-            'commodity_id' => (int) $this->commodity_id, 'grade_id' => (int) $this->grade_id,
-            'qty_kg' => (float) $this->qty, 'harga_per_kg' => (int) $this->harga,
+            'commodity_id' => (int) $this->commodity_id,
+            'grade_id' => (int) $this->grade_id,
+            'nama' => Commodity::find($this->commodity_id)?->nama ?? '',
+            'grade' => Grade::find($this->grade_id)?->kode ?? '',
+            'qty_kg' => (float) $this->qty,
+            'harga_per_kg' => (int) $this->harga,
         ];
         $this->reset('commodity_id', 'grade_id', 'qty', 'harga');
     }

@@ -2,10 +2,34 @@
 
 use App\Modules\AuditNotification\Models\AuditLog;
 use App\Modules\IdentityAccess\Models\User;
+use App\Modules\ProcurementReceiving\Livewire\ReceiptWizard;
 use App\Modules\ProcurementReceiving\Models\Contract;
 use App\Modules\ProcurementReceiving\Models\Receipt;
+use Livewire\Livewire;
 
 beforeEach(fn () => $this->seed());
+
+it('renders Livewire assets for the receiving wizard', function () {
+    $petugas = User::where('email', 'pg-g1@sileuit.id')->first();
+    config(['livewire.inject_assets' => false]);
+
+    $this->actingAs($petugas)->get('/app/terima')
+        ->assertOk()
+        ->assertSee('livewire/livewire.js', false)
+        ->assertSee('wire:click="next"', false)
+        ->assertSee('type="button" wire:click="next"', false);
+});
+
+it('advances to weighing when the next action receives a valid contract', function () {
+    $petugas = User::where('email', 'pg-g1@sileuit.id')->first();
+    $contractId = Contract::where('status', 'AKTIF')->value('id');
+
+    Livewire::actingAs($petugas)
+        ->test(ReceiptWizard::class)
+        ->set('contract_id', $contractId)
+        ->call('next')
+        ->assertSet('step', 2);
+});
 
 function receiptMilik(string $emailPetugas, string $noDok, ?int $contractId = null): Receipt
 {

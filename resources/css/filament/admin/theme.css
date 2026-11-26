@@ -1,0 +1,24 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*.php';
+@source '../../../../resources/views/filament/**/*.blade.php';
+
+@theme {
+    --color-sileuit-primary: #2f5a27;
+    --color-sileuit-primary-dark: #24471e;
+    --color-sileuit-secondary: #6b8f3a;
+    --color-sileuit-accent: #f0b429;
+    --color-sileuit-paper: #fffdf8;
+    --color-sileuit-cream: #fbf3d5;
+    --color-sileuit-line: #cfc6a8;
+    --color-sileuit-ink: #1f2a1c;
+    --color-sileuit-muted: #5b6655;
+}
+
+.fi-body {
+    background-color: #fffdf8;
+}
+
+.fi-sidebar {
+    border-inline-end: 1px solid #cfc6a8;
+}

@@ -116,6 +116,12 @@ class ProcessPosCheckoutAction
 
     private function noNota(): string
     {
-        return sprintf('NOTA-%s-%03d', now()->format('ymd'), PosSale::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1);
+        $prefix = sprintf('NOTA-%s-', now()->format('ymd'));
+        $urut = PosSale::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+        while (PosSale::withoutGlobalScopes()->where('no_nota', sprintf('%s%03d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
+
+        return sprintf('%s%03d', $prefix, $urut);
     }
 }

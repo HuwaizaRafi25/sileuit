@@ -2,6 +2,7 @@
 
 namespace App\Modules\OrderFulfillment\Livewire;
 
+use App\Modules\InventoryLedger\Models\StockTransfer;
 use App\Modules\OrderFulfillment\Actions\PickOrderAction;
 use App\Modules\OrderFulfillment\Actions\ReceiveOrderAction;
 use App\Modules\OrderFulfillment\Actions\ShipOrderAction;
@@ -45,7 +46,8 @@ class OrderFulfillmentBoard extends Component
 
     public function terima(int $shipmentId, ReceiveOrderAction $aksi): void
     {
-        $kg = (float) ($this->diterima[$shipmentId] ?? 0);
+        $raw = $this->diterima[$shipmentId] ?? 0;
+        $kg = (float) str_replace(',', '.', trim((string) $raw));
         try {
             $aksi->execute(Shipment::withoutGlobalScopes()->findOrFail($shipmentId), auth()->user(), $kg);
             $this->pesan = 'Penerimaan tercatat.';
@@ -57,8 +59,14 @@ class OrderFulfillmentBoard extends Component
     public function render()
     {
         return view('livewire.order-fulfillment-board', [
-            'pesanan' => SalesOrder::with('lines.commodity', 'lines.grade')->whereIn('status', ['ALLOCATED', 'PICKED', 'SHIPPED'])->latest()->get(),
-            'pengiriman' => Shipment::with('order')->whereIn('status', ['MENUNGGU', 'DIKIRIM'])->latest()->get(),
+            'pesanan' => SalesOrder::with('lines.commodity', 'lines.grade')->whereIn('status', ['ALLOCATED', 'PARTIAL', 'PICKED', 'SHIPPED'])->latest()->get(),
+            'pengiriman' => Shipment::with('order')->whereIn('status', ['MENUNGGU', 'DIKIRIM', 'DITERIMA'])->latest()->limit(20)->get(),
+            'transferKurir' => StockTransfer::with(['asal', 'tujuan', 'kurir', 'lines.lot.commodity'])
+                ->whereNotNull('kurir_id')
+                ->whereIn('status', ['SHIPPED', 'RECEIVED', 'DISCREPANCY'])
+                ->latest('id')
+                ->limit(15)
+                ->get(),
         ]);
     }
 }

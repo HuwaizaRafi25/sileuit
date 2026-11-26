@@ -14,7 +14,32 @@ class LoginController
 {
     public function showStaff(): View
     {
-        return view('auth.login-staff');
+        return view('auth.login-staff', [
+            'demoRoles' => config('app.env') === 'local'
+                ? array_map(fn (array $account) => $account['label'], $this->demoAccounts())
+                : [],
+        ]);
+    }
+
+    public function loginDemo(Request $request, string $role): RedirectResponse
+    {
+        abort_unless(config('app.env') === 'local', 404);
+
+        $account = $this->demoAccounts()[$role] ?? null;
+        abort_unless($account !== null, 404);
+
+        $user = User::query()->where($account['column'], $account['identifier'])->first();
+        abort_unless($user && $user->status === 'AKTIF' && $user->hasRole($role), 404);
+
+        Auth::login($user);
+        $request->session()->regenerate();
+        $this->setDefaultLocation($user);
+
+        if ($user->hasRole('PETANI')) {
+            return redirect('/portal');
+        }
+
+        return redirect($user->isGlobal() ? '/admin' : '/app/beranda');
     }
 
     public function loginStaff(Request $request): RedirectResponse
@@ -102,5 +127,24 @@ class LoginController
         }
 
         return '+'.$digits;
+    }
+
+    /**
+     * @return array<string, array{label: string, column: string, identifier: string}>
+     */
+    private function demoAccounts(): array
+    {
+        return [
+            'PEMILIK' => ['label' => 'Pemilik', 'column' => 'email', 'identifier' => 'pemilik-1@sileuit.id'],
+            'ADMIN' => ['label' => 'Admin Operasional', 'column' => 'email', 'identifier' => 'adm-1@sileuit.id'],
+            'PENGADAAN' => ['label' => 'Staf Pengadaan', 'column' => 'email', 'identifier' => 'pengadaan-1@sileuit.id'],
+            'PETUGAS_GUDANG' => ['label' => 'Petugas Gudang (G1)', 'column' => 'email', 'identifier' => 'pg-g1@sileuit.id'],
+            'KEPALA_GUDANG' => ['label' => 'Kepala Gudang (G1)', 'column' => 'email', 'identifier' => 'kg-g1@sileuit.id'],
+            'KURIR' => ['label' => 'Kurir', 'column' => 'email', 'identifier' => 'kur-1@sileuit.id'],
+            'KASIR' => ['label' => 'Kasir (Cabang 1)', 'column' => 'email', 'identifier' => 'ksr-c1@sileuit.id'],
+            'KEUANGAN' => ['label' => 'Keuangan', 'column' => 'email', 'identifier' => 'keu-1@sileuit.id'],
+            'PETANI' => ['label' => 'Petani Mitra', 'column' => 'hp_hash', 'identifier' => hash('sha256', '+628111111001')],
+            'MITRA_B2B' => ['label' => 'Mitra Retail B2B', 'column' => 'email', 'identifier' => 'retail-contoh-satu@mitra.sileuit.id'],
+        ];
     }
 }

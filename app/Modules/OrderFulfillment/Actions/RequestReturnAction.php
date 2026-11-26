@@ -54,6 +54,12 @@ class RequestReturnAction
 
     private function noDok(): string
     {
-        return sprintf('RET-%s-%03d', now()->format('ymd'), ReturnDoc::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1);
+        $prefix = sprintf('RET-%s-', now()->format('ymd'));
+        $urut = ReturnDoc::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+        while (ReturnDoc::withoutGlobalScopes()->where('no_dok', sprintf('%s%03d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
+
+        return sprintf('%s%03d', $prefix, $urut);
     }
 }

@@ -24,7 +24,7 @@ class ReturnDoc extends Model
             if ($u->hasRole('PETANI', 'MITRA_B2B')) {
                 $q->where('diminta_oleh', $u->id);
             } else {
-                $q->whereIn('location_id', $u->locationScopes->pluck('id'));
+                $q->where(fn (Builder $w) => $w->whereIn('location_id', $u->locationScopes->pluck('id'))->orWhere('diminta_oleh', $u->id));
             }
         });
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UomConversions\Pages\ManageUomConversions;
+use App\Filament\Support\SafeDelete;
 use App\Modules\ProcurementReceiving\Models\UomConversion;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -35,8 +36,21 @@ class UomConversionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('nama')->required()->maxLength(30)->unique(ignoreRecord: true),
-            TextInput::make('faktor_ke_kg')->label('Faktor ke kg')->numeric()->required()->minValue(0.001),
+            TextInput::make('nama')
+                ->label('Kode / Nama Satuan')
+                ->placeholder('KARUNG_50')
+                ->required()
+                ->maxLength(30)
+                ->dehydrateStateUsing(fn (?string $state): string => strtoupper(trim((string) $state)))
+                ->unique(ignoreRecord: true),
+
+            TextInput::make('faktor_ke_kg')
+                ->label('Setara Kilogram')
+                ->helperText('Contoh: isi 50 jika 1 satuan = 50 kg.')
+                ->numeric()
+                ->suffix('kg')
+                ->required()
+                ->minValue(0.001),
         ]);
     }
 
@@ -44,10 +58,15 @@ class UomConversionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('nama')->searchable()->sortable(),
-                TextColumn::make('faktor_ke_kg')->label('kg per satuan'),
+                TextColumn::make('nama')->label('Satuan')->searchable()->sortable(),
+                TextColumn::make('faktor_ke_kg')
+                    ->label('kg per Satuan')
+                    ->formatStateUsing(fn ($state): string => number_format((float) $state, 3, ',', '.').' kg'),
             ])
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make(),
+                SafeDelete::make(),
+            ])
             ->defaultSort('nama');
     }
 

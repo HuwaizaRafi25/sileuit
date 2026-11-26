@@ -1,33 +1,170 @@
-<x-layouts.app title="Masuk Petani — SiLeuit.id">
-    <div class="flex min-h-screen items-center justify-center px-4 py-10">
-        <div class="w-full max-w-[400px] rounded-[12px] border border-line bg-card p-6">
-            <div class="mb-6 text-center">
-                <img src="/images/sileuit-emblem.png" alt="" class="mx-auto mb-2 h-8 w-8 object-contain" onerror="this.style.display='none'">
-                <h1 class="font-display text-2xl font-semibold text-primary">Masuk Petani Mitra</h1>
-                <p class="mt-1 text-sm text-ink-soft">Masukkan nomor HP dan PIN terdaftar Anda.</p>
-            </div>
-            <form method="POST" action="/login/petani" class="space-y-4">
-                @csrf
+<x-layouts.app title="Portal Petani Mitra — SiLeuit.id">
+    <div class="relative min-h-screen overflow-hidden bg-paper text-ink">
+        {{-- Woven bamboo (anyaman bilik) top trim --}}
+        <div class="h-2 w-full" style="background-image: repeating-linear-gradient(45deg, #2F5A27 0 12px, #C7A66B 12px 24px, #6E471B 24px 36px, #E3C48A 36px 48px); opacity: 0.85;"></div>
+
+        {{-- Faded textured sepia margin ornaments --}}
+        <svg aria-hidden="true" class="pointer-events-none fixed -left-14 bottom-10 z-0 hidden h-72 w-72 text-[#6E471B] opacity-[0.15] lg:block" viewBox="0 0 220 220" fill="none">
+            <path d="M40 190 C65 140, 82 95, 92 40" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M92 40 C82 54, 70 64, 58 66 M92 40 C104 54, 114 66, 122 72" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M84 74 C68 82, 54 96, 46 108 M86 92 C102 98, 116 112, 126 124" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M76 112 C58 122, 42 138, 34 152 M78 130 C96 136, 112 150, 122 164" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <ellipse cx="58" cy="66" rx="7" ry="3.2" transform="rotate(-30 58 66)" stroke="currentColor" stroke-width="1.5"/>
+            <ellipse cx="122" cy="72" rx="7" ry="3.2" transform="rotate(32 122 72)" stroke="currentColor" stroke-width="1.5"/>
+            <ellipse cx="46" cy="108" rx="8" ry="3.4" transform="rotate(-35 46 108)" stroke="currentColor" stroke-width="1.5"/>
+            <ellipse cx="126" cy="124" rx="8" ry="3.4" transform="rotate(35 126 124)" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+
+        <svg aria-hidden="true" class="pointer-events-none fixed -right-12 top-24 z-0 hidden h-64 w-64 text-[#6E471B] opacity-[0.14] lg:block" viewBox="0 0 200 200" fill="none">
+            {{-- Traditional Leuit outline (no cross on roof) --}}
+            <path d="M36 92 L100 32 L164 92" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M52 92 L100 46 L148 92" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
+            <path d="M58 92 L50 154 L150 154 L142 92 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M62 112 H138 M59 132 H141" stroke="currentColor" stroke-width="1.3" stroke-dasharray="3 3"/>
+            <path d="M66 154 V174 M134 154 V174 M54 174 H146" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+
+        {{-- Top Editorial Bar --}}
+        <header class="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+            <a href="/" class="inline-flex items-center gap-3 group">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-cream shadow-sm transition group-hover:bg-primary-dark">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 10.5L12 3l9 7.5" />
+                        <path d="M6.5 10.5l-1 8.5h13l-1-8.5" />
+                        <path d="M4.5 21h15" />
+                        <path d="M8.5 14h7" />
+                    </svg>
+                </span>
                 <div>
-                    <label for="hp" class="mb-1 block text-sm font-medium">Nomor HP</label>
-                    <div class="flex h-14 items-center rounded-[10px] border border-line bg-card focus-within:border-primary">
-                        <span class="border-r border-line px-3 text-lg text-ink-soft">+62</span>
-                        <input id="hp" name="hp" type="tel" inputmode="numeric" value="{{ old('hp') }}" required autofocus placeholder="812xxxxxxx"
-                            class="h-full w-full rounded-r-[10px] px-3 text-lg outline-none">
+                    <span class="font-display text-lg font-bold tracking-tight text-ink">SiLeuit</span>
+                    <span class="block text-[10px] font-medium uppercase tracking-[0.18em] text-[#6E471B]">Lumbung Padi Nusantara</span>
+                </div>
+            </a>
+
+            <a href="/" class="inline-flex items-center gap-1.5 rounded-full border border-line bg-cream/70 px-4 py-2 text-xs font-semibold text-ink-soft transition hover:border-primary/50 hover:bg-cream hover:text-primary">
+                <span>←</span>
+                <span>Kembali ke Beranda</span>
+            </a>
+        </header>
+
+        {{-- Main Split Auth Container --}}
+        <main class="relative z-10 mx-auto flex max-w-6xl items-center justify-center px-4 pb-12 pt-2 sm:px-6 lg:px-8">
+            <div class="grid w-full max-w-5xl overflow-hidden rounded-[22px] border border-line bg-card shadow-[0_24px_60px_-24px_rgba(31,42,28,0.22)] lg:grid-cols-12">
+
+                {{-- Left Nusantara Editorial Panel --}}
+                <div class="relative hidden flex-col justify-between overflow-hidden bg-[#1F2A1C] p-8 text-cream lg:col-span-5 lg:flex">
+                    <img src="/images/panen-sawah.jpg" alt="Petani panen padi di sawah"
+                        class="absolute inset-0 h-full w-full object-cover object-center opacity-55">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#182215] via-[#1F2A1C]/70 to-[#1F2A1C]/40"></div>
+
+                    <div class="relative z-10">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-tan/40 bg-[#1F2A1C]/70 px-3 py-1 text-[11px] font-semibold tracking-wide text-tan backdrop-blur-xs">
+                            <span class="h-1.5 w-1.5 rounded-full bg-tan"></span>
+                            Lumbung Rakyat • Petani Mitra
+                        </span>
+                    </div>
+
+                    <div class="relative z-10 space-y-4">
+                        <p class="font-display text-2xl font-semibold leading-snug text-paper">
+                            Hasil panen tercatat terang, dari timbangan hingga pencairan.
+                        </p>
+                        <p class="text-xs leading-relaxed text-cream/85">
+                            Cukup masukkan nomor handphone dan PIN 6-digit untuk melihat bobot bersih gabah, mutu SNI, dan bukti transfer pembayaran.
+                        </p>
+                        <div class="border-t border-cream/20 pt-4 text-[11px] text-tan/90">
+                            Dampingi setiap musim tanam dengan catatan hasil bumi yang jujur.
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label for="pin" class="mb-1 block text-sm font-medium">PIN 6 digit</label>
-                    <input id="pin" name="pin" type="password" inputmode="numeric" maxlength="6" required
-                        class="h-14 w-full rounded-[10px] border border-line bg-card px-3 text-lg tracking-[0.5em] outline-none focus:border-primary">
+
+                {{-- Right Form Panel --}}
+                <div class="bg-paper/90 p-6 sm:p-9 lg:col-span-7">
+                    <div class="mb-6">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6E471B]">Portal Petani</p>
+                        <h1 class="mt-1 font-display text-2xl font-bold tracking-tight text-ink sm:text-[28px]">
+                            Portal Petani Mitra
+                        </h1>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-soft">
+                            Pantau timbangan gabah, mutu hasil uji, dan status pencairan dana panen Anda.
+                        </p>
+                    </div>
+
+                    {{-- Role Selector Tabs --}}
+                    <div class="mb-6 flex rounded-[12px] border border-line bg-cream/60 p-1">
+                        <a href="/login"
+                            class="flex-1 rounded-[9px] py-2.5 text-center text-xs font-semibold text-ink-soft transition hover:text-primary">
+                            Pengelola &amp; Mitra
+                        </a>
+                        <a href="/login/petani"
+                            class="flex-1 rounded-[9px] bg-primary py-2.5 text-center text-xs font-bold text-white shadow-xs transition">
+                            Petani Mitra
+                        </a>
+                    </div>
+
+                    {{-- Farmer Login Form --}}
+                    <form method="POST" action="/login/petani" class="space-y-4" x-data="{ showPin: false }">
+                        @csrf
+                        <div>
+                            <label for="hp" class="mb-1.5 block text-xs font-semibold text-ink">Nomor Handphone Terdaftar</label>
+                            <div class="flex h-11 items-center rounded-[10px] border border-line bg-white transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                                <span class="flex h-full items-center rounded-l-[9px] border-r border-line/70 bg-cream/60 px-3.5 text-xs font-bold text-ink-soft">
+                                    +62
+                                </span>
+                                <input id="hp" name="hp" type="tel" inputmode="numeric" value="{{ old('hp') }}" required autofocus
+                                    placeholder="8111111001"
+                                    class="h-full w-full rounded-r-[9px] bg-transparent px-3.5 text-sm text-ink outline-none">
+                            </div>
+                            <p class="mt-1.5 text-[11px] text-ink-soft">Contoh: 8111111001 (tanpa angka 0 di depan)</p>
+                        </div>
+
+                        <div>
+                            <div class="mb-1.5 flex items-center justify-between">
+                                <label for="pin" class="text-xs font-semibold text-ink">PIN 6-Digit</label>
+                                <span class="text-[11px] text-ink-soft">PIN Rahasia Petani</span>
+                            </div>
+                            <div class="relative">
+                                <input id="pin" name="pin" :type="showPin ? 'text' : 'password'" inputmode="numeric" maxlength="6" required
+                                    placeholder="••••••"
+                                    class="h-11 w-full rounded-[10px] border border-line bg-white pl-3.5 pr-11 font-mono text-sm tracking-widest text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <button type="button" @click="showPin = !showPin"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-ink-soft transition hover:text-primary focus:outline-none"
+                                    title="Tampilkan / Sembunyikan PIN">
+                                    <svg x-show="!showPin" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg x-show="showPin" x-cloak class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        @error('hp')
+                            <div class="flex items-start gap-2 rounded-[10px] border border-danger/30 bg-danger-bg p-3 text-xs font-semibold text-danger">
+                                <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1.5 1.5 0 004.09 19h15.82a1.5 1.5 0 001.3-2.14l-7.5-13a1.5 1.5 0 00-2.6 0z" />
+                                </svg>
+                                <span>{{ $message }}</span>
+                            </div>
+                        @enderror
+
+                        <button type="submit"
+                            class="mt-2 h-11 w-full rounded-[10px] bg-primary text-sm font-bold text-white shadow-sm transition hover:bg-primary-dark active:scale-[0.99]">
+                            Masuk ke Portal Petani
+                        </button>
+                    </form>
+
+                    <div class="mt-6 space-y-2 border-t border-line/70 pt-5 text-center">
+                        <p class="text-xs text-ink-soft">Lupa PIN? Kunjungi pos timbang gudang terdekat atau hubungi Staf Pengadaan.</p>
+                        <div>
+                            <a href="/login" class="inline-block text-xs font-semibold text-primary hover:underline">
+                                ← Kembali ke Halaman Masuk Pengelola
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                @error('hp')
-                    <p class="rounded-[10px] bg-danger-bg px-3 py-2 text-sm text-danger">{{ $message }}</p>
-                @enderror
-                <button type="submit" class="h-14 w-full rounded-[10px] bg-primary text-lg font-semibold text-white hover:bg-primary-dark">Masuk</button>
-            </form>
-            <p class="mt-4 text-center text-sm text-ink-soft">Lupa PIN? Hubungi Admin atau Staf Pengadaan.</p>
-            <a href="/login" class="mt-2 block text-center text-sm text-primary">← Kembali ke masuk staf</a>
-        </div>
+            </div>
+        </main>
     </div>
 </x-layouts.app>

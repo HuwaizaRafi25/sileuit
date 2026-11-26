@@ -4,6 +4,7 @@ namespace App\Modules\InventoryLedger\Actions;
 
 use App\Infrastructure\Services\AuditLogger;
 use App\Modules\IdentityAccess\Models\User;
+use App\Modules\InventoryLedger\Models\StockBalance;
 use App\Modules\InventoryLedger\Models\StockTransfer;
 use App\Modules\InventoryLedger\Services\StockLedgerWriter;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,18 @@ class ShipTransferAction
             }
 
             foreach ($t->lines as $line) {
+                $balance = StockBalance::where('lot_id', $line->lot_id)
+                    ->where('location_id', $t->dari_lokasi)
+                    ->lockForUpdate()
+                    ->first();
+
+                $tersedia = $balance ? $balance->tersediaKg() : 0.0;
+                if ((float) $line->kg_kirim > $tersedia) {
+                    throw ValidationException::withMessages([
+                        'qty' => 'Jumlah transfer lot '.$line->lot->kode_lot.' ('.number_format((float) $line->kg_kirim, 1, ',', '.').' kg) melebihi saldo tersedia ('.number_format($tersedia, 1, ',', '.').' kg).',
+                    ]);
+                }
+
                 // BR-15: keluar dari asal saat SHIPPED. StockLedgerWriter menolak saldo negatif (TC-28).
                 $this->ledger->post($line->lot, $t->dari_lokasi, 'TRANSFER_KELUAR', -(float) $line->kg_kirim, 'TRANSFER', $t->id, $oleh);
             }

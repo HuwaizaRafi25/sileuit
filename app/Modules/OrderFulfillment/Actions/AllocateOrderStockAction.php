@@ -66,7 +66,10 @@ class AllocateOrderStockAction
                 }
             }
 
-            $status = $totalTerpenuhi <= 0 ? 'BACKORDER' : ($totalTerpenuhi < $totalSisa ? 'PARTIAL' : 'ALLOCATED');
+            $sudahTerpenuhi = (float) $o->lines()->sum('qty_terpenuhi');
+            $status = $sudahTerpenuhi <= 0
+                ? 'BACKORDER'
+                : ($totalTerpenuhi < $totalSisa ? 'PARTIAL' : 'ALLOCATED');
             $o->update(['status' => $status]);
 
             AuditLogger::log('ALOKASI_FEFO', 'sales_orders', $o->id, null, [

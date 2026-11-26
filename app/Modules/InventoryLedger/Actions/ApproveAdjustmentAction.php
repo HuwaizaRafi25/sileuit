@@ -73,8 +73,12 @@ class ApproveAdjustmentAction
     {
         $tgl = $a->tanggal->format('ymd');
         $kodeLok = Location::whereKey($a->location_id)->value('kode');
-        $urut = Lot::where('kode_lot', 'like', "LOT-{$kodeLok}-{$tgl}-SA%")->count() + 1;
+        $prefix = sprintf('LOT-%s-%s-SA', $kodeLok, $tgl);
+        $urut = Lot::where('kode_lot', 'like', $prefix.'%')->count() + 1;
+        while (Lot::where('kode_lot', sprintf('%s%02d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
 
-        return sprintf('LOT-%s-%s-SA%02d', $kodeLok, $tgl, $urut);
+        return sprintf('%s%02d', $prefix, $urut);
     }
 }

@@ -4,10 +4,12 @@ namespace App\Modules\OrderFulfillment\Models;
 
 use App\Infrastructure\Traits\BelongsToLocation;
 use App\Infrastructure\Traits\TanpaAksesMitra;
+use App\Modules\BillingAccountsReceivable\Models\Invoice;
 use App\Modules\ProcurementReceiving\Models\Partner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SalesOrder extends Model
 {
@@ -23,5 +25,10 @@ class SalesOrder extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(SalesOrderLine::class);
+    }
+
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class, 'sales_order_id');
     }
 }

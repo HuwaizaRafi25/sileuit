@@ -4,6 +4,7 @@ namespace App\Modules\InventoryLedger\Models;
 
 use App\Infrastructure\Traits\TanpaAksesMitra;
 use App\Modules\IdentityAccess\Models\Location;
+use App\Modules\IdentityAccess\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ class StockTransfer extends Model
 {
     use TanpaAksesMitra;
 
-    protected $fillable = ['no_dok', 'dari_lokasi', 'ke_lokasi', 'status', 'dikirim_oleh', 'diterima_oleh', 'waktu_kirim', 'waktu_terima'];
+    protected $fillable = ['no_dok', 'dari_lokasi', 'ke_lokasi', 'kurir_id', 'status', 'dikirim_oleh', 'diterima_oleh', 'waktu_kirim', 'waktu_terima', 'catatan'];
 
     protected function casts(): array
     {
@@ -24,7 +25,17 @@ class StockTransfer extends Model
     {
         static::addGlobalScope('lokasiTransfer', function (Builder $q) {
             $u = auth()->user();
-            if ($u && ! $u->isGlobal()) {
+            if (! $u) {
+                return;
+            }
+
+            if ($u->hasRole('KURIR')) {
+                $q->where('kurir_id', $u->id);
+
+                return;
+            }
+
+            if (! $u->isGlobal()) {
                 $ids = $u->locationScopes->pluck('id');
                 $q->where(fn (Builder $w) => $w->whereIn('dari_lokasi', $ids)->orWhereIn('ke_lokasi', $ids));
             }
@@ -39,6 +50,11 @@ class StockTransfer extends Model
     public function tujuan(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'ke_lokasi');
+    }
+
+    public function kurir(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kurir_id');
     }
 
     public function lines(): HasMany

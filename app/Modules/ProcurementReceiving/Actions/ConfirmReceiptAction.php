@@ -86,8 +86,12 @@ class ConfirmReceiptAction
     private function kodeLot(Receipt $r): string
     {
         $tgl = $r->waktu_timbang->format('ymd');
-        $urut = Lot::where('kode_lot', 'like', "LOT-{$r->location->kode}-{$tgl}-%")->count() + 1;
+        $prefix = sprintf('LOT-%s-%s-', $r->location->kode, $tgl);
+        $urut = Lot::where('kode_lot', 'like', $prefix.'%')->count() + 1;
+        while (Lot::where('kode_lot', sprintf('%s%02d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
 
-        return sprintf('LOT-%s-%s-%02d', $r->location->kode, $tgl, $urut);
+        return sprintf('%s%02d', $prefix, $urut);
     }
 }

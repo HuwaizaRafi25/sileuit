@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'location.scope' => EnsureLocationScope::class,
         ]);
-        $middleware->validateCsrfTokens(except: ['api/*']);
+        $middleware->validateCsrfTokens(except: ['api/*', 'livewire/update']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Throwable $e, Request $request) {

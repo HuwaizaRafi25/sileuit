@@ -1,4 +1,4 @@
-@import url('https://fonts.bunny.net/css?family=fraunces:400,500,600,700|inter:400,500,600,700&display=swap');
+@import url('https://fonts.bunny.net/css?family=fraunces:400,500,600,700,400i|inter:400,500,600,700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -41,4 +41,39 @@ body {
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Enhanced luxurious AOS reveal travel & expo-out easing */
+[data-aos="fade-up"]:not(.aos-animate) {
+    transform: translate3d(0, 72px, 0);
+}
+[data-aos="fade-down"]:not(.aos-animate) {
+    transform: translate3d(0, -72px, 0);
+}
+[data-aos="fade-right"]:not(.aos-animate) {
+    transform: translate3d(-64px, 0, 0);
+}
+[data-aos="fade-left"]:not(.aos-animate) {
+    transform: translate3d(64px, 0, 0);
+}
+body[data-aos-easing="ease-out-cubic"] [data-aos],
+[data-aos][data-aos][data-aos-easing="ease-out-cubic"] {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Fallback if AOS fails or reduced motion is preferred */
+@media (prefers-reduced-motion: reduce) {
+    [data-aos] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+html.aos-fallback [data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
 }

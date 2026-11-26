@@ -1,0 +1,13 @@
+{
+  "name": "SiLeuit.id",
+  "short_name": "SiLeuit",
+  "description": "Sistem rantai pasok gabah dan beras Jawa Barat",
+  "start_url": "/app/beranda",
+  "display": "standalone",
+  "background_color": "#FFFDF8",
+  "theme_color": "#2F5A27",
+  "icons": [
+    { "src": "/images/sileuit-emblem.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/images/sileuit-emblem.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

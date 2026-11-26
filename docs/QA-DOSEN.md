@@ -277,3 +277,34 @@ SCR-13: tabel append-only dengan pencarian (aksi/entitas/nama pelaku) dan filter
 Hanya Pemilik/Admin yang boleh membuka; peran lain menerima 403. Semua kejadian penting
 (PENERIMAAN_KONFIRMASI, PEMBAYARAN_PETANI, PEMBAYARAN_INVOICE, AKSES_DITOLAK, dsb.)
 sudah tercatat dari Fase 1-4.
+
+## Fase 6 — Offline, Notifikasi, Ekspor, Integritas, Beban
+
+**1. Bagaimana sistem bertahan saat sinyal putus (FR-18)?**
+Aset aplikasi di-cache service worker (PWA) sehingga layar tetap terbuka. Data penerimaan
+yang dibuat offline diberi idempotency key; saat online dikirim ke /api/v1/procurement/sync.
+Server memvalidasi ulang (harga, grade, tolak karantina) dan menolak duplikat — kirim ulang
+dengan kunci sama tidak membuat penerimaan kedua (TC-14).
+
+**2. Kenapa idempotency key mencegah duplikasi?**
+Kunci unik disimpan dengan constraint UNIQUE di tabel. Saat permintaan datang, sistem mencari
+kunci itu dulu; bila sudah ada, langsung kembalikan dokumen yang sama tanpa memproses ulang.
+Ini melindungi klik ganda, retry jaringan, dan webhook ulang.
+
+**3. Apa itu verifikasi integritas dan kapan dijalankan?**
+Command sileuit:verifikasi-integritas memeriksa invariant kritis: saldo ledger = stock_balance,
+on-hand ≥ 0, alokasi ≤ total invoice, satu penerimaan satu pembayaran. Dijalankan setelah
+restore backup (TC-17, J.5) untuk membuktikan data konsisten.
+
+**4. Bagaimana backup & pemulihan memenuhi RPO/RTO?**
+sileuit:backup men-dump MySQL ke storage/backups (dijadwalkan). RPO ≤ 1 jam berarti kehilangan
+maksimal 1 jam data; RTO ≤ 4 jam berarti pulih dalam 4 jam. Latihan restore bulanan diverifikasi
+dengan command integritas (NFR-03).
+
+**5. Kenapa ekspor memakai PDF, bukan screenshot?**
+dompdf merender Blade jadi PDF sehingga surat jalan, invoice, dan slip bisa dicetak/dibagikan
+resmi dengan data yang selalu diambil dari database (FR-16), bukan hasil tampilan semata.
+
+**6. Bagaimana pencarian global tetap aman?**
+Pencarian memakai model yang sudah dipasangi global scope lokasi & mitra, jadi hasil otomatis
+terbatas pada cakupan pengguna. Mencari dokumen gudang lain tidak akan menampilkannya (TC-08).

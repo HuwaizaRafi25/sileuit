@@ -90,6 +90,13 @@ class IssueInvoiceAction
 
     private function noInvoice(): string
     {
-        return sprintf('INV-%s-%03d', now()->format('ymd'), Invoice::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1);
+        $tgl = now()->format('ymd');
+        $prefix = sprintf('INV-%s-', $tgl);
+        $urut = Invoice::withoutGlobalScopes()->whereDate('created_at', today())->count() + 1;
+        while (Invoice::withoutGlobalScopes()->where('no', sprintf('%s%03d', $prefix, $urut))->exists()) {
+            $urut++;
+        }
+
+        return sprintf('%s%03d', $prefix, $urut);
     }
 }

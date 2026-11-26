@@ -33,6 +33,9 @@ kalimat patch siap tempel untuk dokumen terkait agar klarifikasi ke dosen minima
 | DEV-025 | 25 Nov 2026 | Invoice terbit otomatis dari pesanan DELIVERED menggunakan HET aktif sebagai harga per kg | BR-11 (HET) dipakai konsisten untuk harga jual eceran & B2B; bila tidak ada HET → Rp10.000 placeholder | BR-08, BR-11 | ACC |
 | DEV-026 | 25 Nov 2026 | Pembayaran > saldo ditolak mentah (A-17); tidak ada pencatatan deposit/kelebihan bayar | MVP bukan akuntansi penuh; kasir/keuangan diminta memecah pembayaran | A-17 | ACC |
 | DEV-027 | 25 Nov 2026 | Status invoice (ISSUED/PARTIAL/PAID/OVERDUE) diturunkan dari total − alokasi, bukan disimpan | IR-11: mencegah manipulasi saldo manual | IR-11 | ACC |
+| DEV-028 | 25 Nov 2026 | Offline sync MVP: endpoint /api/v1/procurement/sync dengan idempotency key + validasi ulang server; antrean IndexedDB sisi klien adalah scaffold (PWA shell + service worker cache) | FR-18 prioritas S; kontrak server (TC-14) dipenuhi penuh, UI wizard offline penuh menyusul | FR-18, F.8 | ACC |
+| DEV-029 | 25 Nov 2026 | Notifikasi in-app dibuat via command terjadwal (batch), bukan realtime event | Cukup untuk FR-17 MVP; realtime push masuk rilis berikutnya | FR-17 | ACC |
+| DEV-030 | 25 Nov 2026 | TC-18 (uji beban) disediakan sebagai skrip k6 + ambang, eksekusi penuh di staging | Uji beban membutuhkan lingkungan staging & data sintetis volume panen raya (A-13) | TC-18, NFR-01 | ACC |
 
 ## Patch kalimat untuk dokumen (tempel sebelum submit)
 

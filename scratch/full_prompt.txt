@@ -1,0 +1,204 @@
+<USER_REQUEST>
+oke sekarang coba kamu recreate langkah2 kaya gini
+📖 REGRESI BABAK B — CERITA SATU MINGGU DI SiLeuit.id
+Para pemeran (semua password staf Sileuit#2026):
+Pemeran
+Akun
+Peran
+Pa Danu
+HP 8111111001 · PIN 123456
+Petani P-001
+Pa Dedi
+HP 8111111002 · PIN 123456
+Petani P-002
+Ujang
+pg-g1@
+Petugas Gudang G1
+Pak Asep
+kg-g1@
+Kepala Gudang G1
+Rina
+kg-g2@
+Kepala Gudang G2
+Mbak Sari
+ksr-c1@
+Kasir Cabang 1
+Bu Tuti
+keu-1@
+Keuangan
+Pak Omang
+pemilik-1@
+Pemilik
+Kang Ucin
+kur-1@
+Kurir
+Warung Bu Ijah
+retail-contoh-satu@mitra.sileuit.id
+Mitra R-01
+Adegan 1 — Pagi di pos timbang (TC-01)
+Pa Danu datang membawa gabah kontraknya. Ujang membuka wizard: pilih Pa Danu, timbang 1050/50, lalu mutu lengkap (air 13,5 · hampa 2 · patah 3 · Ciherang · foto). Sistem mengunci harga A Rp6.800 dari daftar bertanggal dan menampilkan nilai Rp6.800.000. Sekali klik, lot lahir.
+Checkpoint: status CONFIRMED · lot di /app/stok · kartu stok TERIMA +1.000 · audit PENERIMAAN_KONFIRMASI.
+Adegan 2 — Timbangan yang jujur (TC-02, TC-03)
+Kiriman kedua Pa Danu netto 995 kg → banner hijau "dalam toleransi", lolos otomatis (TC-02). Kiriman ketiga cuma 900 kg (−10%) → banner kuning muncul, Ujang wajib menulis alasan, tombol berubah jadi "Kirim untuk persetujuan". Stok belum bertambah — coba cek /app/stok, angkanya tidak bergerak. Pak Asep membuka detail penerimaan, menulis "susut transportasi wajar", Setujui → barulah Ujang konfirmasi dan stok masuk (TC-03).
+Checkpoint: sebelum persetujuan saldo tetap; sesudahnya bertambah 900; audit memuat SELISIH_DISETUJUI + alasan.
+Adegan 3 — Gabah basah Pa Dedi (TC-04 + portal)
+Pa Dedi membawa gabah kadar air 22%. Sistem tidak memberi grade sama sekali; Ujang harus memilih Tolak (atau Karantina) dengan alasan. Pilih Tolak, alasan: "kadar air 22% di atas batas 18%". Lalu login sebagai Pa Dedi di /login/petani: kartu Grade berubah jadi "Tidak diterima" lengkap dengan alasannya — inilah BR-06 bekerja sampai ke mata petani.
+Checkpoint: tidak ada lot/ledger baru; portal menampilkan alasan; audit PENERIMAAN_DITOLAK.
+Adegan 4 — Mutu menentukan rupiah (TC-19)
+Siang itu Pa Danu mengirim lagi, kadar air 15%. Tanpa siapapun memilih, sistem menurunkan ke Grade B dan nilai bayar otomatis Rp6.500.000. Di portal, Pa Danu melihat grade B dan harga B — transparan, tidak bisa dinego petugas (BR-01).
+Checkpoint: lot bergrade B; nilai 6,5 jt; portal konsisten.
+Adegan 5 — Hari tanpa harga (TC-05)
+Ingat properti B: harga grade C sudah kuhapus. Ujang mencoba penerimaan kadar air 17% (grade C) → langkah konfirmasi menampilkan "Harga untuk grade ini belum ditetapkan. Hubungi Staf Pengadaan." dan lot tidak terbentuk. Setelah demo, kembalikan harga C.
+Checkpoint: pesan blokir muncul; lots dan stock_ledgers tidak bertambah.
+Adegan 6 — Uang untuk Pa Danu (TC-06)
+Bu Tuti membuka detail penerimaan CONFIRMED, memilih Transfer, menulis nomor bukti, klik Catat — lalu sengaja klik cepat dua kali. Hanya satu Payment tercipta (coba klik lagi manual dengan referensi beda: ditolak, "sudah pernah dibayar"). Pa Danu membuka portal: status LUNAS, dan Bu Tuti mencetak slip PDF dari /app/cetak/slip/{id}.
+Checkpoint: payments = 1 baris; status PAID; slip terunduh.
+Adegan 7 — Godaan mengintip (TC-25, TC-08, TC-26)
+Sesi iseng yang serius: Pa Danu mencoba URL penerimaan Pa Dedi → 403. Ujang mencoba URL dokumen G2 dan memanggil API bayar lewat Postman → 403. Mbak Sari membuka /admin/price-list-items → 403 (kasir tak boleh lihat harga beli petani). Ujang mencoba API approve selisih → 403. Malamnya Pak Omang membuka /app/audit dan melihat semua percobaan itu tercatat sebagai AKSES_DITOLAK lengkap dengan IP.
+Checkpoint: empat penolakan 403 + empat baris audit; pencarian Ujang tidak menampilkan dokumen G2.
+Adegan 8 — Barang berpindah, selisih tidak hilang (TC-09, TC-28)
+Pak Asep mengirim 400 kg ke G2. Saat SHIPPED, ledger G1 langsung −400 (barang "di jalan" bersama Kang Ucin). Rina menimbang kedatangan: 390 kg → status DISCREPANCY, selisih 10 kg terpampang di baris transfer dan tidak menguap — nanti diselesaikan lewat penyesuaian beralasan. Lalu mereka sengaja mencoba transfer 700 kg padahal on-hand tersisa 600 → ditolak mentah-mentah, saldo utuh (TC-28).
+Checkpoint: G1 600 · G2 390 · selisih 10 tercatat · percobaan 700 kg tidak meninggalkan mutasi.
+Adegan 9 — Stok tua didahulukan (TC-10, TC-27)
+Di /app/pesanan, buat pesanan GABAH A 100 kg dan Alokasikan. Lihat reservasinya: yang terpotong lot 1 Oktober, bukan 1 November — FEFO bekerja (TC-10). Sekarang buat pesanan lagi dan perhatikan lot LOT-G1-260501-99 (milik Mei, sudah kedaluwarsa): alokasi normal melewatinya. Hanya tombol "Setujui lot kedaluwarsa" milik Pak Asep yang bisa memakainya, dan itu tercatat di audit (TC-27).
+Checkpoint: reservasi menempel di lot tertua; lot kedaluwarsa tidak tersentuh alokasi normal; override meninggalkan jejak.
+Adegan 10 — Warung Bu Ijah memesan (FR-09/10)
+Bu Ijah menelepon; Mbak Admin membuat pesanan atas nama mitra R-01 (pakai tambalan A). Stok kurang? Sistem menawarkan alokasi sebagian + BACKORDER, bukan menolak seluruhnya. Setelah PICKED, surat jalan terbit (cetak PDF), Kang Ucin mengirim, dan penerimaan dicatat kurang 10 kg → banner kekurangan muncul, membuka pintu retur.
+Checkpoint: status berjalan NEW→ALLOCATED→PICKED→SHIPPED→DELIVERED; kekurangan tercatat; surat jalan PDF valid.
+Adegan 11 — Retur yang disiplin (TC-12, TC-23, TC-24)
+Mbak Sari mencoba retur 60 kg dari kiriman 50 kg → ditolak. Mencoba retur tanpa referensi → ditolak. Lalu retur 20 kg yang benar: Pak Asep setujui, barang diterima dengan hasil Karantina. Percobaan kedua retur 40 kg → ditolak, karena sisa yang boleh diretur tinggal 30 kg.
+Checkpoint: pesan sisa 30 kg muncul; ledger tidak berubah untuk penolakan; hasil karantina tercatat.
+Adegan 12 — Jam sibuk kasir (TC-07, TC-16, TC-20)
+Mbak Sari menjual 120 kg padahal stok 100 → "Stok tersedia 100 kg. Kurangi jumlah." Ia lalu mencoba harga Rp14.500 untuk beras ber-HET Rp13.500 mode BLOKIR → transaksi ditolak; ganti mode PERINGATAN di konfigurasi → lolos dengan bendera peringatan. Puncaknya: buka dua jendela (satu incognito) sebagai ksr-c1, isi keranjang 50 kg di keduanya (stok tinggal 50), tekan Bayar hampir bersamaan → satu nota terbit, satu lagi melihat "Stok baru saja habis." Saldo akhir 0, tak pernah negatif.
+Checkpoint: tiga penolakan/pesan sesuai skenario; pos_sales = 1; saldo lot 0.
+Adegan 13 — Buku piutang Bu Tuti (TC-11, TC-21, TC-22, TC-15)
+Dari pesanan DELIVERED Bu Ijah, Bu Tuti menerbitkan invoice. Bu Ijah membayar Rp4.000.000 dari Rp10.000.000 → status PARTIAL, saldo Rp6.000.000, aging berjalan (TC-11). Dicoba bayar Rp7.000.000 → ditolak, "melebihi saldo" (TC-21). Lalu pakai invoice baseline: R-01 punya INV-BASE-001 (5 jt) dan INV-BASE-002 (8 jt); bayar 6 jt tanpa memilih invoice → yang lama LUNAS dulu, yang baru PARTIAL 1 jt — FIFO bekerja (TC-22). Terakhir, terbitkan invoice baru yang membuat total piutang menembus batas kredit 15 jt → sistem menahan sampai ada persetujuan (TC-15).
+Checkpoint: status & saldo persis seperti angka di atas; dashboard Keuangan menampilkan aging yang konsisten.
+Adegan 14 — Malam hari, mesin bekerja (TC-13, TC-14, TC-17, TC-18)
+Webhook gateway dikirim dua kali lewat PowerShell (skrip HMAC di gerbang Fase 4) → Payment tetap satu (TC-13). Di console browser sebagai Ujang, kirim payload /api/v1/procurement/sync dua kali dengan idempotency_key sama → penerimaan tetap satu, balasan kedua duplikat:true (TC-14). Bu Tuti menjalankan sileuit:backup, lalu latihan restore ke database uji dan menutupnya dengan sileuit:verifikasi-integritas → INTEGRITAS OK, catat durasinya untuk RTO (TC-17). Uji beban k6 menyusul di staging (TC-18).
+Epilog — Pagi Pak Omang
+Dashboard menampilkan penjualan, stok per lokasi, lot ≥80% umur simpan, piutang & aging; /app/audit menceritakan seluruh minggu ini siapa-melakukan-apa; tiga PDF (slip, surat jalan, invoice) tersimpan sebagai bukti fisik. Satu siklus utuh: kontrak → timbang → mutu → lot → bayar petani → transfer → pesanan → kirim → terima → jual → piutang → laporan — persis checklist K.7 butir 1.
+
+yang sebenernya awalnya tu dari gini
+BABAK B — Regresi Manual 28 TC
+Kredensial: staf {kode}@sileuit.id / Sileuit#2026 · petani +628111111001, PIN 123456. Jalankan php artisan serve + Docker services.
+B.1 — Checklist 19 P1 (WAJIB 100%)
+TC
+Demo
+Hasil harapan
+01
+pg-g1 → Terima: P-001, bruto 1050/tara 50, air 13,5%, foto → konfirmasi
+Netto 1.000, Grade A, lot LOT-G1-..., ledger +1.000, nilai Rp6.800.000, CONFIRMED
+03
+Ulangi dengan netto 900 + alasan
+MENUNGGU_PERSETUJUAN, stok belum bertambah; kg-g1 setujui → lanjut
+04
+Ulangi dengan kadar air 22% → Tolak + alasan
+REJECTED, tanpa lot/ledger; alasan terlihat di portal P-001
+06
+keu-1 bayar penerimaan CONFIRMED; klik 2× cepat; coba lagi key manual beda
+1 pembayaran; PAID; percobaan lain ditolak
+07
+ksr-c1 jual melebihi stok
+Ditolak, saldo utuh, tanpa ledger
+08
+pg-g1 buka URL penerimaan G2 + postJson API pay
+403 keduanya + baris AKSES_DITOLAK di audit
+09
+Transfer 400 G1→G2, kirim, terima 390
+DISCREPANCY, G1 −400, G2 +390, selisih 10 terlihat
+10
+Dua lot (1 Okt & 1 Nov) @500, alokasi 100
+Lot 1 Okt terpakai, reservasi 100 di sana
+11
+Invoice 10 jt → bayar 4 jt
+PARTIAL, saldo 6 jt, aging jalan
+12
+Retur 60 dari kiriman 50
+Ditolak
+17
+php artisan sileuit:backup → salin .sql → restore ke DB uji → sileuit:verifikasi-integritas
+INTEGRITAS OK; catat durasi ≤4 jam (RTO)
+19
+Terima dengan air 15%
+Grade B otomatis, nilai Rp6.500.000
+20
+Stok 50 kg, checkout penuh 2× berurutan
+Hanya 1 sukses, saldo 0, tak pernah negatif
+21
+Saldo invoice 6 jt → bayar 7 jt
+Ditolak, saldo tak berubah (A-17)
+23
+Retur tanpa referensi
+Ditolak
+25
+Login P-001 → buka URL penerimaan P-002
+403/404 + audit
+26
+ksr-c1 buka /admin/price-list-items; pg-g1 POST API bayar
+403 keduanya + audit
+27
+Lot kedaluwarsa → alokasi normal
+Dilewati; tombol override hanya kg-g1; tercatat audit
+28
+Transfer 500 padahal on-hand 400
+Ditolak, tanpa mutasi, tanpa reservasi tertinggal
+B.2 — Checklist 9 P2 (target ≥90%)
+TC
+Demo
+Hasil harapan
+02
+Netto 995 (selisih 0,5%)
+Lolos otomatis tanpa persetujuan
+05
+Hapus harga grade C di panel → terima air 17%
+Konfirmasi diblokir "Harga belum ditetapkan"
+13
+Kirim webhook HMAC sama 2× (Postman/curl)
+1 Payment; yang kedua "sudah tercatat"
+14
+POST /api/v1/procurement/sync payload sama 2×
+1 penerimaan; kedua duplikat:true
+15
+Saldo piutang 12 jt, batas 15 jt, invoice baru 5 jt
+Ditolak; tombol paksa → terbit + audit
+16
+Jual di atas HET (mode BLOKIR & PERINGATAN)
+Blokir / lolos dengan tanda peringatan
+18
+k6 run k6/load-test.js -e BASE_URL=... di staging
+p95 <1,5 dtk, gagal <2%
+22
+R-01: INV 5 jt + 8 jt, bayar 6 jt tanpa pilih
+INV lama PAID, INV baru PARTIAL alokasi 1 jt
+24
+Retur 20 (karantina) lalu retur 40
+Pertama berhasil, kedua ditolak (sisa 30)
+B.3 — Satu siklus utuh (K.7 butir 1) — urut, satu sesi
+pemilik-1 → /admin cek harga A/B/C sudah disetujui.
+pg-g1 → Terima P-001 1.000 kg → konfirmasi.
+keu-1 → bayar petani → cek portal P-001: LUNAS.
+pg-g1 → transfer 400 kg ke G2 → kirim; kg-g2 terima 390 → DISCREPANCY.
+pg-g1 → penyesuaian −35 kg (susut pengeringan) → kg-g1 setujui.
+ksr-c1 buat pesanan cabang → adm-1 alokasi FEFO → picking → kur-1 kirim → terima + POD.
+keu-1 → terbitkan invoice → mitra bayar sebagian → cek aging di dashboard.
+ksr-c1 → jual kasir dekat HET → nota + stok berkurang.
+Ajukan retur 20 kg → kg-g1 setujui → terima karantina.
+pemilik-1 → dashboard (piutang, stok, lot ≥80%), /app/audit cari AKSES_DITOLAK, cetak 1 invoice PDF.
+Tutup dengan /healthz → "healthy" + sileuit:verifikasi-integritas → INTEGRITAS OK.
+
+tapi mengacu ke data2 yang ada di seeder, trus untuk langkah2 sekalian cerita itu kamu buat aja md baru di folder docs
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-25T12:00:44+07:00.
+
+The user's current state is as follows:
+Active Document: d:\sileuit\app\Modules\ProcurementReceiving\Livewire\ReceiptWizard.php (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 246
+Other open documents:
+- d:\sileuit\resources\views\components\layouts\app.blade.php (LANGUAGE_UNSPECIFIED)
+- d:\sileuit\resources\views\livewire\receipt-wizard.blade.php (LANGUAGE_UNSPECIFIED)
+- d:\sileuit\app\Providers\AppServiceProvider.php (LANGUAGE_UNSPECIFIED)
+- d:\sileuit\resources\views\auth\login-petani.blade.php (LANGUAGE_UNSPECIFIED)
+- d:\sileuit\resources\views\auth\login-staff.blade.php (LANGUAGE_UNSPECIFIED)
+</ADDITIONAL_METADATA>
